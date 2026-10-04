@@ -53,10 +53,7 @@ int findLocation(char name[]) {
 
 
 /* Add two-way road */
-void addRoad(char source[],
-             char destination[],
-             int distance,
-             int duration) {
+void addRoad(char source[],char destination[],int distance,int duration) {
 
     int s = findLocation(source);
     int d = findLocation(destination);
@@ -268,19 +265,16 @@ int heapSize = 0;
 
 
 /* Swap heap nodes */
-void swap(struct HeapNode *a,
-          struct HeapNode *b) {
+void swap(struct HeapNode *a,struct HeapNode *b) {
 
     struct HeapNode temp = *a;
-
     *a = *b;
     *b = temp;
 }
 
 
 /* Insert into Min Heap */
-void push(int vertex,
-          int distance) {
+void push(int vertex,int distance) {
 
     int i = heapSize;
 
@@ -293,13 +287,11 @@ void push(int vertex,
 
         int parent = (i - 1) / 2;
 
-        if (heap[parent].distance <=
-            heap[i].distance)
+        if (heap[parent].distance <=heap[i].distance)
 
             break;
 
-        swap(&heap[parent],
-             &heap[i]);
+        swap(&heap[parent],&heap[i]);
 
         i = parent;
     }
@@ -322,16 +314,12 @@ struct HeapNode pop() {
 
         int smallest = i;
 
-        if (left < heapSize &&
-            heap[left].distance <
-            heap[smallest].distance)
+        if (left < heapSize &&heap[left].distance <heap[smallest].distance)
 
             smallest = left;
 
 
-        if (right < heapSize &&
-            heap[right].distance <
-            heap[smallest].distance)
+        if (right < heapSize &&heap[right].distance <heap[smallest].distance)
 
             smallest = right;
 
@@ -339,8 +327,7 @@ struct HeapNode pop() {
         if (smallest == i)
             break;
 
-        swap(&heap[i],
-             &heap[smallest]);
+        swap(&heap[i],&heap[smallest]);
 
         i = smallest;
     }
@@ -353,14 +340,9 @@ struct HeapNode pop() {
    PART 2: DIJKSTRA
    ================================================== */
 
-void dijkstra(int source,
-              int distance[],
-              int travelTime[],
-              int parent[]) {
+void dijkstra(int source,int distance[],int travelTime[],int parent[]) {
 
-    for (int i = 0;
-         i < locationCount;
-         i++) {
+    for (int i = 0;i < locationCount;i++) {
 
         distance[i] = INF;
         travelTime[i] = INF;
@@ -383,55 +365,39 @@ void dijkstra(int source,
 
         /* Ignore outdated heap value */
 
-        if (current.distance !=
-            distance[u])
+        if (current.distance !=distance[u])
 
             continue;
 
 
         /* Check neighbours */
 
-        for (int i = 0;
-             i < graph[u].edgeCount;
-             i++) {
+        for (int i = 0;i < graph[u].edgeCount;i++) {
 
-            int v =
-                graph[u]
-                .edges[i]
-                .destination;
+            int v =graph[u].edges[i].destination;
 
-            int weight =
-                graph[u]
-                .edges[i]
-                .distance;
+            int weight =graph[u].edges[i].distance;
 
-            int edgeTime =
-                graph[u].edges[i].duration;
+            int edgeTime =graph[u].edges[i].duration;
 
-            int newDistance =
-                distance[u] + weight;
+            int newDistance =distance[u] + weight;
 
-            int newTime =
-                travelTime[u] + edgeTime;
+            int newTime =travelTime[u] + edgeTime;
 
 
             /* Relaxation
                The route is selected using distance.
                Time is accumulated for the same shortest-distance route. */
 
-            if (newDistance <
-                distance[v]) {
+            if (newDistance <distance[v]) {
 
-                distance[v] =
-                    newDistance;
+                distance[v] =newDistance;
 
-                travelTime[v] =
-                    newTime;
+                travelTime[v] =newTime;
 
                 parent[v] = u;
 
-                push(v,
-                     newDistance);
+                push(v,newDistance);
             }
         }
     }
@@ -439,8 +405,7 @@ void dijkstra(int source,
 
 
 /* Print shortest path */
-void printPath(int parent[],
-               int vertex) {
+void printPath(int parent[],int vertex) {
 
     if (parent[vertex] == -1) {
 
@@ -450,11 +415,9 @@ void printPath(int parent[],
         return;
     }
 
-    printPath(parent,
-              parent[vertex]);
+    printPath(parent,parent[vertex]);
 
-    printf(" -> %s",
-           graph[vertex].name);
+    printf(" -> %s",graph[vertex].name);
 }
 
 
@@ -472,29 +435,19 @@ void createMatrices(
        for the itinerary.
     */
 
-    for (int i = 0;
-         i < selectedCount;
-         i++) {
+    for (int i = 0;i < selectedCount;i++) {
 
         int source = selected[i];
 
-        dijkstra(source,
-                 distance,
-                 travelTime,
-                 parent);
+        dijkstra(source,distance,travelTime,parent);
 
-        for (int j = 0;
-             j < selectedCount;
-             j++) {
+        for (int j = 0;j < selectedCount;j++) {
 
-            int destination =
-                selected[j];
+            int destination =selected[j];
 
-            distanceMatrix[i][j] =
-                distance[destination];
+            distanceMatrix[i][j] =distance[destination];
 
-            timeMatrix[i][j] =
-                travelTime[destination];
+            timeMatrix[i][j] =travelTime[destination];
         }
     }
 }
@@ -513,31 +466,19 @@ void displaySelectedShortestPaths() {
     printf("     PART 2: SHORTEST PATHS\n");
     printf("========================================\n");
 
-    for (int i = 0;
-         i < selectedCount;
-         i++) {
+    for (int i = 0;i < selectedCount;i++) {
 
-        dijkstra(selected[i],
-                 distance,
-                 travelTime,
-                 parent);
+        dijkstra(selected[i],distance,travelTime,parent);
 
-        for (int j = i + 1;
-             j < selectedCount;
-             j++) {
+        for (int j = i + 1;j < selectedCount;j++) {
 
-            printf("\n%s -> %s\n",
-                   graph[selected[i]].name,
-                   graph[selected[j]].name);
+            printf("\n%s -> %s\n",graph[selected[i]].name,graph[selected[j]].name);
 
-            printPath(parent,
-                      selected[j]);
+            printPath(parent,selected[j]);
 
-            printf("\nDistance: %d km\n",
-                   distance[selected[j]]);
+            printf("\nDistance: %d km\n",distance[selected[j]]);
 
-            printf("Travel Time: %d min\n",
-                   travelTime[selected[j]]);
+            printf("Travel Time: %d min\n",travelTime[selected[j]]);
         }
     }
 }
