@@ -760,3 +760,227 @@ void runTSP(
     printf("\n\nMinimum Distance: %d km\n",
            tspBestDistance);
 }
+
+int main() {
+
+    /* ==================================================
+       ADD LOCATIONS
+       ================================================== */
+
+    addLocation("Hotel Shreyas");
+    addLocation("Hotel Saffron");
+
+    addLocation("Shaniwar Wada");
+    addLocation("Aga Khan Palace");
+    addLocation("Sinhagad Fort");
+    addLocation("Pataleshwar Cave Temple");
+    addLocation("Raja Dinkar Kelkar Museum");
+
+    addLocation("Vaishali");
+    addLocation("Shabree");
+
+
+    /* ==================================================
+       ADD ROADS
+       ================================================== */
+
+        /* ==================================================
+       ADD ROADS
+       Distances are approximate road distances in km.
+       Duration is approximate travel time in minutes.
+       ================================================== */
+
+    /* ---------- HOTEL SHREYAS ---------- */
+
+    addRoad("Hotel Shreyas",
+            "Shaniwar Wada",
+            2,
+            8);
+
+    addRoad("Hotel Shreyas",
+            "Pataleshwar Cave Temple",
+            2,
+            8);
+
+    addRoad("Hotel Shreyas",
+            "Raja Dinkar Kelkar Museum",
+            3,
+            12);
+
+    addRoad("Hotel Shreyas",
+            "Vaishali",
+            1,
+            5);
+
+
+    /* ---------- HOTEL SAFFRON ---------- */
+
+    addRoad("Hotel Saffron",
+            "Shaniwar Wada",
+            4,
+            12);
+
+    addRoad("Hotel Saffron",
+            "Pataleshwar Cave Temple",
+            3,
+            10);
+
+    addRoad("Hotel Saffron",
+            "Aga Khan Palace",
+            4,
+            12);
+
+
+    /* ---------- CENTRAL PUNE ---------- */
+
+    addRoad("Shaniwar Wada",
+            "Raja Dinkar Kelkar Museum",
+            1,
+            5);
+
+    addRoad("Shaniwar Wada",
+            "Pataleshwar Cave Temple",
+            1,
+            5);
+
+    addRoad("Shaniwar Wada",
+            "Aga Khan Palace",
+            8,
+            17);
+
+    addRoad("Shaniwar Wada",
+            "Sinhagad Fort",
+            36,
+            76);
+
+
+    /* ---------- OTHER TOURIST LOCATIONS ---------- */
+
+    addRoad("Aga Khan Palace",
+            "Raja Dinkar Kelkar Museum",
+            8,
+            18);
+
+    addRoad("Aga Khan Palace",
+            "Pataleshwar Cave Temple",
+            7,
+            15);
+
+    addRoad("Sinhagad Fort",
+            "Raja Dinkar Kelkar Museum",
+            22,
+            50);
+
+
+    /* ---------- RESTAURANTS ---------- */
+
+    addRoad("Raja Dinkar Kelkar Museum",
+            "Shabree",
+            4,
+            10);
+
+    addRoad("Pataleshwar Cave Temple",
+            "Vaishali",
+            2,
+            7);
+
+    addRoad("Vaishali",
+            "Shabree",
+            1,
+            5);
+
+    addRoad("Shaniwar Wada",
+            "Vaishali",
+            3,
+            10);
+
+    addRoad("Shaniwar Wada",
+            "Shabree",
+            3,
+            10);
+
+    addRoad("Aga Khan Palace",
+            "Shabree",
+            8,
+            20);
+
+ /*==================================================
+       DISPLAY GRAPH
+       ================================================== */
+
+    displayGraph();
+
+
+    /* ==================================================
+       USER SELECTS HOTEL, DESTINATIONS & RESTAURANTS
+       ================================================== */
+
+    userSelection();
+
+
+    /* ==================================================
+       DISPLAY SHORTEST PATHS
+       ================================================== */
+
+    displaySelectedShortestPaths();
+
+
+    /* ==================================================
+       CREATE DISTANCE MATRIX
+       ================================================== */
+
+    int matrix[MAX][MAX];
+
+    createDistanceMatrix(matrix);
+
+
+    /* ==================================================
+       CHOOSE ITINERARY METHOD
+       ================================================== */
+
+    int choice;
+
+    printf("\n========================================\n");
+    printf("       CHOOSE ITINERARY METHOD\n");
+    printf("========================================\n");
+
+    printf("1. Nearest Neighbor (Greedy)\n");
+    printf("2. Exact TSP\n");
+
+    printf("\nEnter your choice: ");
+    scanf("%d", &choice);
+
+
+    /* 
+       Hotel is always the first selected location.
+       Therefore its index in selected[] is 0.
+    */
+
+    int start = 0;
+
+
+    /* ==================================================
+       RUN SELECTED ALGORITHM
+       ================================================== */
+
+    if (choice == 1) {
+
+        greedyTSP(start, matrix);
+
+    }
+
+    else if (choice == 2) {
+
+        runTSP(start, matrix);
+
+    }
+
+    else {
+
+        printf("\nInvalid choice.\n");
+
+    }
+
+
+    return 0;
+}
