@@ -355,6 +355,7 @@ struct HeapNode pop() {
 
 void dijkstra(int source,
               int distance[],
+              int travelTime[],
               int parent[]) {
 
     for (int i = 0;
@@ -362,10 +363,12 @@ void dijkstra(int source,
          i++) {
 
         distance[i] = INF;
+        travelTime[i] = INF;
         parent[i] = -1;
     }
 
     distance[source] = 0;
+    travelTime[source] = 0;
 
     heapSize = 0;
 
@@ -402,17 +405,28 @@ void dijkstra(int source,
                 .edges[i]
                 .distance;
 
+            int edgeTime =
+                graph[u].edges[i].duration;
+
             int newDistance =
                 distance[u] + weight;
 
+            int newTime =
+                travelTime[u] + edgeTime;
 
-            /* Relaxation */
+
+            /* Relaxation
+               The route is selected using distance.
+               Time is accumulated for the same shortest-distance route. */
 
             if (newDistance <
                 distance[v]) {
 
                 distance[v] =
                     newDistance;
+
+                travelTime[v] =
+                    newTime;
 
                 parent[v] = u;
 
@@ -444,11 +458,13 @@ void printPath(int parent[],
 }
 
 
-/* Create distance matrix */
-void createDistanceMatrix(
-    int matrix[MAX][MAX]) {
+/* Create distance and travel-time matrices */
+void createMatrices(
+    int distanceMatrix[MAX][MAX],
+    int timeMatrix[MAX][MAX]) {
 
     int distance[MAX];
+    int travelTime[MAX];
     int parent[MAX];
 
     /*
@@ -464,6 +480,7 @@ void createDistanceMatrix(
 
         dijkstra(source,
                  distance,
+                 travelTime,
                  parent);
 
         for (int j = 0;
@@ -473,8 +490,11 @@ void createDistanceMatrix(
             int destination =
                 selected[j];
 
-            matrix[i][j] =
+            distanceMatrix[i][j] =
                 distance[destination];
+
+            timeMatrix[i][j] =
+                travelTime[destination];
         }
     }
 }
@@ -482,9 +502,11 @@ void createDistanceMatrix(
 
 /* Display shortest paths between selected locations */
 
+
 void displaySelectedShortestPaths() {
 
     int distance[MAX];
+    int travelTime[MAX];
     int parent[MAX];
 
     printf("\n========================================\n");
@@ -497,6 +519,7 @@ void displaySelectedShortestPaths() {
 
         dijkstra(selected[i],
                  distance,
+                 travelTime,
                  parent);
 
         for (int j = i + 1;
@@ -512,16 +535,22 @@ void displaySelectedShortestPaths() {
 
             printf("\nDistance: %d km\n",
                    distance[selected[j]]);
+
+            printf("Travel Time: %d min\n",
+                   travelTime[selected[j]]);
         }
     }
 }
+
 /* ==================================================
    PART 3: GREEDY ITINERARY
    ================================================== */
 
+
 void greedyTSP(
     int start,
-    int matrix[MAX][MAX]) {
+    int distanceMatrix[MAX][MAX],
+    int timeMatrix[MAX][MAX]) {
 
     int visited[MAX] = {0};
 
@@ -530,6 +559,7 @@ void greedyTSP(
     int current = start;
 
     int totalDistance = 0;
+    int totalTime = 0;
 
     visited[start] = 1;
 
@@ -552,11 +582,11 @@ void greedyTSP(
              i++) {
 
             if (!visited[i] &&
-                matrix[current][i] <
+                distanceMatrix[current][i] <
                 minimum) {
 
                 minimum =
-                    matrix[current][i];
+                    distanceMatrix[current][i];
 
                 nearest = i;
             }
@@ -572,6 +602,7 @@ void greedyTSP(
         route[count] = nearest;
 
         totalDistance += minimum;
+        totalTime += timeMatrix[current][nearest];
 
         current = nearest;
     }
@@ -582,7 +613,10 @@ void greedyTSP(
     route[selectedCount] = start;
 
     totalDistance +=
-        matrix[current][start];
+        distanceMatrix[current][start];
+
+    totalTime +=
+        timeMatrix[current][start];
 
 
     /* Display */
@@ -594,18 +628,27 @@ void greedyTSP(
     printf("\nGreedy Itinerary:\n");
 
     for (int i = 0;
-         i <= selectedCount;
+         i < selectedCount;
          i++) {
 
-        printf("%s",
-               graph[selected[route[i]]].name);
+        int from = route[i];
+        int to = route[i + 1];
 
-        if (i < selectedCount)
-            printf(" -> ");
+        printf("\n%d. %s -> %s",
+               i + 1,
+               graph[selected[from]].name,
+               graph[selected[to]].name);
+
+        printf(" | Distance: %d km | Time: %d min",
+               distanceMatrix[from][to],
+               timeMatrix[from][to]);
     }
 
     printf("\n\nTotal Distance: %d km\n",
            totalDistance);
+
+    printf("Total Travel Time: %d min\n",
+           totalTime);
 }
 /* ==================================================
    PART 4: ACTUAL TSP
@@ -627,7 +670,7 @@ int tspStart;
 void tsp(int current,
          int count,
          int currentDistance,
-         int matrix[MAX][MAX]) {
+         int distanceMatrix[MAX][MAX]) {
 
     /* All selected locations visited */
 
@@ -635,7 +678,7 @@ void tsp(int current,
 
         int totalDistance =
             currentDistance +
-            matrix[current][tspStart];
+            distanceMatrix[current][tspStart];
 
 
         /* New best route */
@@ -682,8 +725,8 @@ void tsp(int current,
                 i,
                 count + 1,
                 currentDistance +
-                matrix[current][i],
-                matrix
+                distanceMatrix[current][i],
+                distanceMatrix
             );
 
 
@@ -699,7 +742,8 @@ void tsp(int current,
 
 void runTSP(
     int start,
-    int matrix[MAX][MAX]) {
+    int distanceMatrix[MAX][MAX],
+    int timeMatrix[MAX][MAX]) {
 
     tspStart = start;
 
@@ -729,7 +773,7 @@ void runTSP(
         start,
         1,
         0,
-        matrix
+        distanceMatrix
     );
 
 
@@ -741,24 +785,32 @@ void runTSP(
 
     printf("\nOptimized Itinerary:\n");
 
+    int totalTime = 0;
+
     for (int i = 0;
-         i <= selectedCount;
+         i < selectedCount;
          i++) {
 
-        printf("%s",
-               graph[
-                   selected[
-                       tspBestRoute[i]
-                   ]
-               ].name);
+        int from = tspBestRoute[i];
+        int to = tspBestRoute[i + 1];
 
-        if (i < selectedCount)
-            printf(" -> ");
+        printf("\n%d. %s -> %s",
+               i + 1,
+               graph[selected[from]].name,
+               graph[selected[to]].name);
+
+        printf(" | Distance: %d km | Time: %d min",
+               distanceMatrix[from][to],
+               timeMatrix[from][to]);
+
+        totalTime += timeMatrix[from][to];
     }
-
 
     printf("\n\nMinimum Distance: %d km\n",
            tspBestDistance);
+
+    printf("Total Travel Time: %d min\n",
+           totalTime);
 }
 
 int main() {
@@ -929,9 +981,11 @@ int main() {
        CREATE DISTANCE MATRIX
        ================================================== */
 
-    int matrix[MAX][MAX];
+    int distanceMatrix[MAX][MAX];
+    int timeMatrix[MAX][MAX];
 
-    createDistanceMatrix(matrix);
+    createMatrices(distanceMatrix,
+                   timeMatrix);
 
 
     /* ==================================================
@@ -965,13 +1019,13 @@ int main() {
 
     if (choice == 1) {
 
-        greedyTSP(start, matrix);
+        greedyTSP(start, distanceMatrix, timeMatrix);
 
     }
 
     else if (choice == 2) {
 
-        runTSP(start, matrix);
+        runTSP(start, distanceMatrix, timeMatrix);
 
     }
 
