@@ -1,5 +1,4 @@
-1001|Royal Rajasthan Heritage|2026-11-15|20261115|Delhi|Jaipur|4|2|1200.00|845.50|280.00|Standard|Visit Amber Palace, Hawa Mahal and City Palace
-1002|Taj Mahal Express Getaway|2026-11-28|20261128|Delhi|Agra|2|2|600.00|410.00|233.00|Budget|Sunrise visit to Taj Mahal and sunset at Mehtab Bagh
-1003|Lakes & Palaces of Udaipur|2026-12-10|20261210|Jaipur|Udaipur|5|3|1800.00|1350.00|395.00|Luxury|Stay at heritage haveli, romantic boat cruise on Lake Pichola
-1004|Himalayan Mountain Adventure|2026-12-24|20261224|Delhi|Manali|6|4|2200.00|1620.00|591.00|Standard|Solang Valley snow sports and scenic mountain drive
-
+1001|Pune Heritage & Sahyadri Forts|2026-11-15|20261115|Pune|Pune|3|2|25000.00|18500.00|48.00|Standard|Shaniwar Wada, Sinhagad Fort trek, and Dagdusheth Ganpati Temple
+1002|Jaipur Royal Palaces & Bazaars|2026-11-28|20261128|Jaipur|Jaipur|3|2|30000.00|22400.00|38.00|Standard|Amber Palace, Hawa Mahal, Jantar Mantar and local bazaars
+1003|Udaipur Royal Lakes & Haveli Stay|2026-12-10|20261210|Udaipur|Udaipur|4|2|65000.00|52000.00|42.00|Luxury|Heritage stay by Lake Pichola, sunset boat cruise and City Palace
+1004|Mumbai Coastal City Tour|2026-12-24|20261224|Mumbai|Mumbai|3|3|35000.00|28500.00|35.00|Standard|Gateway of India, Marine Drive sunset and Elephanta Caves

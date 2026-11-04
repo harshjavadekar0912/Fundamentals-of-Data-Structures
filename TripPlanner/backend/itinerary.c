@@ -1,23 +1,18 @@
 /**
- * itinerary.c - Greedy Nearest Neighbor, Exact TSP (Backtracking),
- * Algorithm Comparison, and Day-wise Itinerary Scheduler.
+ * itinerary.c - Exact TSP (Recursion & Backtracking with Branch-and-Bound Pruning)
+ * and Constraint-Based Day-wise Itinerary Scheduler.
  * 
  * Part of Trip Planner Web Application
  * Core backend implemented in C (DSA)
  * 
- * ALGORITHM SPECIFICATIONS:
- * 1. Greedy Nearest Neighbor:
- *    - Time Complexity: O(N^2) where N = number of attractions.
- *    - Space Complexity: O(N) visited array and path stack.
- * 2. Exact TSP (Recursion & Backtracking with Branch-and-Bound Pruning):
- *    - Time Complexity: O(N!) worst-case, effectively pruned by lower-bound checking.
- *    - Space Complexity: O(N) recursive call stack depth.
- * 3. Day-Wise Scheduler:
- *    - Respects attraction opening & closing times, visit duration, and daily time limits.
+ * ALGORITHM SPECIFICATION:
+ * Exact TSP (Recursion & Backtracking):
+ * - Time Complexity: O(N!) worst-case, aggressively pruned via branch-and-bound lower bounding.
+ * - Auxiliary Space Complexity: O(N) recursion stack.
+ * - Guarantees absolute global minimum travel distance between all selected attractions.
  */
 
 #include "itinerary.h"
-#include <time.h>
 
 /* Helper: convert HHMM format to total minutes from midnight (e.g., 930 -> 570 mins) */
 static int hhmmToMinutes(int hhmm) {
@@ -40,7 +35,7 @@ static int addMinutes(int hhmm, int addMins) {
 }
 
 /* -------------------------------------------------------------------------
-   DISTANCE MATRIX GENERATION (Combining intra-city & inter-city Dijkstra)
+   DISTANCE MATRIX GENERATION
    ------------------------------------------------------------------------- */
 
 void buildDistanceMatrix(const MasterData* data, const int* attrIds, int count,
@@ -56,22 +51,22 @@ void buildDistanceMatrix(const MasterData* data, const int* attrIds, int count,
             }
             const Attraction* a2 = findAttractionById(data, attrIds[j]);
             if (!a1 || !a2) {
-                distMatrix[i][j] = 10.0;
-                timeMatrix[i][j] = 30;
+                distMatrix[i][j] = 8.0;
+                timeMatrix[i][j] = 25;
                 continue;
             }
 
             if (a1->locationId == a2->locationId) {
-                /* Same city: Realistic intra-city distance estimation based on attraction ID delta */
-                double intraDist = 4.0 + (abs(a1->id - a2->id) % 7) * 2.2;
-                int intraTime = (int)(intraDist * 3.0) + 10; /* approx 20-25 km/h city traffic */
+                /* Same city: Realistic intra-city road distance based on attractions */
+                double intraDist = 3.5 + (abs(a1->id - a2->id) % 6) * 2.1;
+                int intraTime = (int)(intraDist * 3.2) + 10; /* Indian city traffic: ~20-25 km/h */
                 distMatrix[i][j] = intraDist;
                 timeMatrix[i][j] = intraTime;
             } else {
-                /* Different cities: Run Dijkstra's algorithm on the road graph */
+                /* Different cities: Dijkstra on road network */
                 DijkstraResult dr = dijkstraShortestPath(&data->graph, a1->locationId, a2->locationId);
                 if (dr.reachable) {
-                    distMatrix[i][j] = dr.totalDistanceKm + 8.0; /* add city-center transfer */
+                    distMatrix[i][j] = dr.totalDistanceKm + 10.0;
                     timeMatrix[i][j] = dr.totalTimeMin + 30;
                 } else {
                     distMatrix[i][j] = 999.0;
@@ -83,62 +78,7 @@ void buildDistanceMatrix(const MasterData* data, const int* attrIds, int count,
 }
 
 /* -------------------------------------------------------------------------
-   ALGORITHM 1: GREEDY NEAREST NEIGHBOR
-   ------------------------------------------------------------------------- */
-
-TSPResult solveGreedyNearestNeighbor(int count,
-                                     const double distMatrix[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS],
-                                     const int timeMatrix[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS]) {
-    TSPResult res;
-    memset(&res, 0, sizeof(TSPResult));
-    res.numStops = count;
-    res.isOptimal = 0;
-
-    if (count <= 0) return res;
-
-    clock_t startClock = clock();
-
-    int visited[MAX_SELECTED_ATTRS] = {0};
-    int current = 0;
-    visited[current] = 1;
-    res.sequence[0] = 0;
-
-    double totalDist = 0.0;
-    int totalTime = 0;
-
-    for (int step = 1; step < count; step++) {
-        int nextNode = -1;
-        double minDist = INF_DIST;
-
-        for (int candidate = 0; candidate < count; candidate++) {
-            if (!visited[candidate]) {
-                if (distMatrix[current][candidate] < minDist) {
-                    minDist = distMatrix[current][candidate];
-                    nextNode = candidate;
-                }
-            }
-        }
-
-        if (nextNode != -1) {
-            visited[nextNode] = 1;
-            res.sequence[step] = nextNode;
-            totalDist += distMatrix[current][nextNode];
-            totalTime += timeMatrix[current][nextNode];
-            current = nextNode;
-        }
-    }
-
-    clock_t endClock = clock();
-    res.totalDistanceKm = totalDist;
-    res.totalTravelTimeMin = totalTime;
-    res.executionTimeMicrosec = (long)(((double)(endClock - startClock) / CLOCKS_PER_SEC) * 1000000.0);
-    if (res.executionTimeMicrosec <= 0) res.executionTimeMicrosec = 12; /* microsecond precision floor */
-
-    return res;
-}
-
-/* -------------------------------------------------------------------------
-   ALGORITHM 2: EXACT TSP (RECURSION & BACKTRACKING WITH BRANCH-AND-BOUND)
+   EXACT TSP (RECURSION & BACKTRACKING WITH BRANCH-AND-BOUND PRUNING)
    ------------------------------------------------------------------------- */
 
 typedef struct {
@@ -153,7 +93,7 @@ static void tspRecursion(int current, int visitedCount, int visitedMask,
                          const double distMatrix[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS],
                          const int timeMatrix[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS],
                          TSPBacktrackState* state) {
-    /* Pruning branch-and-bound: if current path exceeds known best, prune branch */
+    /* Branch-and-bound pruning: discard branches exceeding known minimum */
     if (currentDist >= state->bestDist) {
         return;
     }
@@ -195,76 +135,33 @@ TSPResult solveExactTSP(int count,
 
     if (count <= 0) return res;
 
-    clock_t startClock = clock();
-
     TSPBacktrackState state;
     state.bestDist = INF_DIST;
     state.bestTime = 0;
     state.count = count;
 
     int path[MAX_SELECTED_ATTRS];
-    path[0] = 0; /* start at the primary attraction / origin */
+    path[0] = 0;
 
     tspRecursion(0, 1, (1 << 0), 0.0, 0, path, distMatrix, timeMatrix, &state);
-
-    clock_t endClock = clock();
 
     res.totalDistanceKm = state.bestDist;
     res.totalTravelTimeMin = state.bestTime;
     for (int i = 0; i < count; i++) {
         res.sequence[i] = state.bestSeq[i];
     }
-    res.executionTimeMicrosec = (long)(((double)(endClock - startClock) / CLOCKS_PER_SEC) * 1000000.0);
-    if (res.executionTimeMicrosec <= 0) res.executionTimeMicrosec = 35;
 
     return res;
 }
 
 /* -------------------------------------------------------------------------
-   ALGORITHM COMPARISON: GREEDY vs. EXACT TSP
-   ------------------------------------------------------------------------- */
-
-TSPComparison compareItineraryAlgorithms(int count,
-                                         const double distMatrix[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS],
-                                         const int timeMatrix[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS]) {
-    TSPComparison comp;
-    memset(&comp, 0, sizeof(TSPComparison));
-
-    comp.greedy = solveGreedyNearestNeighbor(count, distMatrix, timeMatrix);
-    comp.exact = solveExactTSP(count, distMatrix, timeMatrix);
-
-    comp.distanceDiffKm = comp.greedy.totalDistanceKm - comp.exact.totalDistanceKm;
-    if (comp.exact.totalDistanceKm > 0.001) {
-        comp.percentDiff = (comp.distanceDiffKm / comp.exact.totalDistanceKm) * 100.0;
-        if (comp.percentDiff < 0.0) comp.percentDiff = 0.0;
-    } else {
-        comp.percentDiff = 0.0;
-    }
-
-    if (comp.distanceDiffKm <= 0.01) {
-        snprintf(comp.comparisonComment, sizeof(comp.comparisonComment),
-                 "Greedy Nearest-Neighbor matched the exact global optimum (0.0%% deviation) in %ld microseconds.",
-                 comp.greedy.executionTimeMicrosec);
-        strncpy(comp.recommendedAlgorithm, "Greedy Nearest-Neighbor (Equally Optimal & Fast)", sizeof(comp.recommendedAlgorithm) - 1);
-    } else {
-        snprintf(comp.comparisonComment, sizeof(comp.comparisonComment),
-                 "Exact TSP saved %.1f km (%.1f%% more optimal) compared to Greedy heuristic.",
-                 comp.distanceDiffKm, comp.percentDiff);
-        strncpy(comp.recommendedAlgorithm, "Exact TSP (Global Optimum)", sizeof(comp.recommendedAlgorithm) - 1);
-    }
-
-    return comp;
-}
-
-/* -------------------------------------------------------------------------
-   DAY-WISE ITINERARY GENERATOR (Opening/Closing Times & Constraints)
+   DAY-WISE ITINERARY GENERATOR
    ------------------------------------------------------------------------- */
 
 FullItinerary generateDayWiseItinerary(const MasterData* data,
                                        const int* attrIds,
                                        int count,
-                                       int numDays,
-                                       int preferExactTSP) {
+                                       int numDays) {
     FullItinerary itin;
     memset(&itin, 0, sizeof(FullItinerary));
 
@@ -276,20 +173,18 @@ FullItinerary generateDayWiseItinerary(const MasterData* data,
     if (numDays > MAX_DAYS) numDays = MAX_DAYS;
 
     itin.numDays = numDays;
-    itin.activeAlgorithmUsed = preferExactTSP ? 1 : 0;
 
     /* Build distance & travel time matrix */
     double distMatrix[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS];
     int timeMatrix[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS];
     buildDistanceMatrix(data, attrIds, count, distMatrix, timeMatrix);
 
-    /* Run algorithm comparison */
-    itin.comparison = compareItineraryAlgorithms(count, distMatrix, timeMatrix);
+    /* Compute Exact TSP */
+    itin.optimalOrder = solveExactTSP(count, distMatrix, timeMatrix);
+    itin.totalDistanceKm = itin.optimalOrder.totalDistanceKm;
+    itin.totalTravelTimeMin = itin.optimalOrder.totalTravelTimeMin;
 
-    /* Pick sequence based on preference */
-    const TSPResult* chosen = preferExactTSP ? &itin.comparison.exact : &itin.comparison.greedy;
-
-    /* Initialize days */
+    /* Initialize day buckets */
     for (int d = 0; d < numDays; d++) {
         itin.days[d].dayNumber = d + 1;
         itin.days[d].itemCount = 0;
@@ -300,11 +195,11 @@ FullItinerary generateDayWiseItinerary(const MasterData* data,
     }
 
     int currentDay = 0;
-    int currentDayTime = DEFAULT_DAY_START_TIME; /* 9:00 AM */
+    int currentDayTime = DEFAULT_DAY_START_TIME; /* 09:00 AM */
     int prevAttrLocalIdx = -1;
 
     for (int step = 0; step < count; step++) {
-        int attrLocalIdx = chosen->sequence[step];
+        int attrLocalIdx = itin.optimalOrder.sequence[step];
         int originalAttrId = attrIds[attrLocalIdx];
         const Attraction* attr = findAttractionById(data, originalAttrId);
         if (!attr) continue;
@@ -325,30 +220,29 @@ FullItinerary generateDayWiseItinerary(const MasterData* data,
         /* Check visit end time */
         int visitEnd = addMinutes(visitStart, attr->avgVisitTimeMin);
 
-        /* Check closing time warning */
+        /* Closing hour check */
         if (hhmmToMinutes(visitStart) >= hhmmToMinutes(attr->closeTime)) {
-            snprintf(note, sizeof(note), "Caution: Attraction closes at %04d. Arrival was after closing.", attr->closeTime);
+            snprintf(note, sizeof(note), "Notice: Arrived near/after closing (%04d)", attr->closeTime);
         } else if (hhmmToMinutes(visitEnd) > hhmmToMinutes(attr->closeTime)) {
-            snprintf(note, sizeof(note), "Shortened: Closes at %04d. Visit time clipped.", attr->closeTime);
+            snprintf(note, sizeof(note), "Closing soon (%04d); visit time slightly clipped", attr->closeTime);
         }
 
-        /* Check if daily active time limit exceeded (e.g., past 18:30 / 1830 or > 540 active mins) */
+        /* Check daily active hour bound */
         int totalMinutesToday = hhmmToMinutes(visitEnd) - hhmmToMinutes(DEFAULT_DAY_START_TIME);
         if (totalMinutesToday > MAX_DAILY_ACTIVE_MINUTES && currentDay < numDays - 1) {
-            /* Move this attraction to the next day */
             currentDay++;
             currentDayTime = DEFAULT_DAY_START_TIME;
-            travelTime = 20; /* morning transit from hotel */
+            travelTime = 20;
             arrivalTime = addMinutes(currentDayTime, travelTime);
             visitStart = arrivalTime;
             if (hhmmToMinutes(visitStart) < hhmmToMinutes(attr->openTime)) {
                 visitStart = attr->openTime;
             }
             visitEnd = addMinutes(visitStart, attr->avgVisitTimeMin);
-            snprintf(note, sizeof(note), "Transferred to Day %d morning to maintain balanced daily pace", currentDay + 1);
+            snprintf(note, sizeof(note), "Transferred to Day %d morning for relaxed pacing", currentDay + 1);
         }
 
-        /* Add to current day schedule */
+        /* Add to day */
         DaySchedule* daySched = &itin.days[currentDay];
         if (daySched->itemCount < MAX_SCHEDULE_PER_DAY) {
             ScheduledItem* item = &daySched->items[daySched->itemCount++];
@@ -370,7 +264,6 @@ FullItinerary generateDayWiseItinerary(const MasterData* data,
             itin.totalAttractionsScheduled++;
             itin.grandTotalTicketCost += attr->ticketCost;
 
-            /* Advance time for next stop */
             currentDayTime = visitEnd;
             prevAttrLocalIdx = attrLocalIdx;
         }

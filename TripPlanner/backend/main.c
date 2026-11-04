@@ -1,10 +1,11 @@
 /**
  * main.c - Main Entry Point for Trip Planner C Backend.
- * 
  * Features:
- * 1. Interactive ASCII CLI Menu for direct testing and grading.
- * 2. Automated Module Unit Tests.
- * 3. High-Performance JSON API interface for Node.js Express server integration.
+ * - Single-city focused exploration and tour planning (e.g. Pune, Jaipur, etc.)
+ * - Exact TSP itinerary optimization (recursion & backtracking with branch-and-bound)
+ * - Indian Rupees (INR ₹) currency throughout
+ * - Clean JSON API for Node.js Express server integration
+ * - Automated Unit Testing & Interactive CLI
  * 
  * Part of Trip Planner Web Application
  * Core backend implemented in C (DSA)
@@ -136,7 +137,7 @@ static void apiPlanRoute(const MasterData* data, int srcId, int destId) {
     printf("]}\n");
 }
 
-static void apiOptimizeItinerary(const MasterData* data, int numDays, int preferExact, const char* attrIdsCsv) {
+static void apiOptimizeItinerary(const MasterData* data, int numDays, const char* attrIdsCsv) {
     int attrIds[MAX_SELECTED_ATTRS];
     int count = 0;
 
@@ -152,39 +153,16 @@ static void apiOptimizeItinerary(const MasterData* data, int numDays, int prefer
     }
 
     if (count == 0) {
-        /* Default to first 5 attractions */
         for (int i = 0; i < 5 && i < data->numAttractions; i++) {
             attrIds[count++] = data->attractions[i].id;
         }
     }
 
-    FullItinerary itin = generateDayWiseItinerary(data, attrIds, count, numDays, preferExact);
+    /* Uses Exact TSP only */
+    FullItinerary itin = generateDayWiseItinerary(data, attrIds, count, numDays);
 
-    printf("{\"success\":true,\"numDays\":%d,\"totalAttractionsScheduled\":%d,\"grandTotalTicketCost\":%.2f,\"activeAlgorithmUsed\":%d,",
-           itin.numDays, itin.totalAttractionsScheduled, itin.grandTotalTicketCost, itin.activeAlgorithmUsed);
-
-    /* Algorithmic Comparison details */
-    printf("\"comparison\":{");
-    printf("\"greedy\":{\"totalDistanceKm\":%.2f,\"totalTravelTimeMin\":%d,\"executionTimeUs\":%ld,\"sequence\":[",
-           itin.comparison.greedy.totalDistanceKm, itin.comparison.greedy.totalTravelTimeMin, itin.comparison.greedy.executionTimeMicrosec);
-    for (int i = 0; i < itin.comparison.greedy.numStops; i++) {
-        if (i > 0) printf(",");
-        printf("%d", attrIds[itin.comparison.greedy.sequence[i]]);
-    }
-    printf("]},");
-    printf("\"exact\":{\"totalDistanceKm\":%.2f,\"totalTravelTimeMin\":%d,\"executionTimeUs\":%ld,\"sequence\":[",
-           itin.comparison.exact.totalDistanceKm, itin.comparison.exact.totalTravelTimeMin, itin.comparison.exact.executionTimeMicrosec);
-    for (int i = 0; i < itin.comparison.exact.numStops; i++) {
-        if (i > 0) printf(",");
-        printf("%d", attrIds[itin.comparison.exact.sequence[i]]);
-    }
-    printf("]},");
-    printf("\"distanceDiffKm\":%.2f,\"percentDiff\":%.2f,\"comparisonComment\":",
-           itin.comparison.distanceDiffKm, itin.comparison.percentDiff);
-    printJsonString(itin.comparison.comparisonComment);
-    printf(",\"recommendedAlgorithm\":");
-    printJsonString(itin.comparison.recommendedAlgorithm);
-    printf("},");
+    printf("{\"success\":true,\"numDays\":%d,\"totalAttractionsScheduled\":%d,\"grandTotalTicketCost\":%.2f,\"totalDistanceKm\":%.2f,\"totalTravelTimeMin\":%d,",
+           itin.numDays, itin.totalAttractionsScheduled, itin.grandTotalTicketCost, itin.totalDistanceKm, itin.totalTravelTimeMin);
 
     /* Day schedules */
     printf("\"days\":[");
@@ -333,25 +311,24 @@ static void apiTripList(void) {
     freeAVLTree(root);
 }
 
-static void apiTripAdd(const char* name, const char* date, const char* src, const char* dest,
+static void apiTripAdd(const char* name, const char* date, const char* dest,
                        int days, int travellers, double budget, double cost, double dist,
                        const char* style, const char* notes) {
     AVLNode* root = NULL;
     const char* filePath = getTripsFilePath();
     loadTripsFromFile(&root, filePath);
 
-    /* Generate new tripId based on timestamp and random seed */
     srand((unsigned int)time(NULL));
     int newId = 1000 + (rand() % 9000);
 
     TripRecord t;
     memset(&t, 0, sizeof(TripRecord));
     t.tripId = newId;
-    strncpy(t.tripName, name ? name : "My Journey", sizeof(t.tripName) - 1);
+    strncpy(t.tripName, name ? name : "City Exploration", sizeof(t.tripName) - 1);
     strncpy(t.startDate, date ? date : "2026-11-20", sizeof(t.startDate) - 1);
     t.dateInt = dateStringToInteger(t.startDate);
-    strncpy(t.sourceLocation, src ? src : "Delhi", sizeof(t.sourceLocation) - 1);
-    strncpy(t.destLocation, dest ? dest : "Agra", sizeof(t.destLocation) - 1);
+    strncpy(t.destLocation, dest ? dest : "Pune", sizeof(t.destLocation) - 1);
+    strncpy(t.sourceLocation, dest ? dest : "Pune", sizeof(t.sourceLocation) - 1);
     t.numDays = days > 0 ? days : 3;
     t.numTravellers = travellers > 0 ? travellers : 2;
     t.totalBudget = budget;
@@ -363,8 +340,7 @@ static void apiTripAdd(const char* name, const char* date, const char* src, cons
     root = avlInsertTrip(root, &t);
     saveTripsToFile(root, filePath);
 
-    printf("{\"success\":true,\"message\":\"Trip added successfully via AVL Tree insertion.\",\"tripId\":%d}\n", newId);
-
+    printf("{\"success\":true,\"message\":\"Trip saved successfully.\",\"tripId\":%d}\n", newId);
     freeAVLTree(root);
 }
 
@@ -375,7 +351,7 @@ static void apiTripGet(int tripId) {
 
     const AVLNode* found = avlSearchTripById(root, tripId);
     if (!found) {
-        printf("{\"success\":false,\"message\":\"Trip not found in AVL tree.\"}\n");
+        printf("{\"success\":false,\"message\":\"Trip not found.\"}\n");
     } else {
         const TripRecord* t = &found->trip;
         printf("{\"success\":true,\"trip\":{\"tripId\":%d,\"tripName\":", t->tripId);
@@ -404,17 +380,17 @@ static void apiTripDelete(int tripId) {
 
     const AVLNode* target = avlSearchTripById(root, tripId);
     if (!target) {
-        printf("{\"success\":false,\"message\":\"Trip ID %d not found in AVL Tree.\"}\n", tripId);
+        printf("{\"success\":false,\"message\":\"Trip ID %d not found.\"}\n", tripId);
     } else {
         root = avlDeleteTripById(root, tripId);
         saveTripsToFile(root, filePath);
-        printf("{\"success\":true,\"message\":\"Trip ID %d deleted from AVL tree and rebalanced successfully.\"}\n", tripId);
+        printf("{\"success\":true,\"message\":\"Trip ID %d removed successfully.\"}\n", tripId);
     }
 
     freeAVLTree(root);
 }
 
-static void apiTripUpdate(int tripId, const char* name, const char* date, const char* src, const char* dest,
+static void apiTripUpdate(int tripId, const char* name, const char* date, const char* dest,
                           int days, int travellers, double budget, double cost, double dist,
                           const char* style, const char* notes) {
     AVLNode* root = NULL;
@@ -431,8 +407,10 @@ static void apiTripUpdate(int tripId, const char* name, const char* date, const 
             strncpy(updated.startDate, date, sizeof(updated.startDate) - 1);
             updated.dateInt = dateStringToInteger(date);
         }
-        if (src && strlen(src) > 0) strncpy(updated.sourceLocation, src, sizeof(updated.sourceLocation) - 1);
-        if (dest && strlen(dest) > 0) strncpy(updated.destLocation, dest, sizeof(updated.destLocation) - 1);
+        if (dest && strlen(dest) > 0) {
+            strncpy(updated.destLocation, dest, sizeof(updated.destLocation) - 1);
+            strncpy(updated.sourceLocation, dest, sizeof(updated.sourceLocation) - 1);
+        }
         if (days > 0) updated.numDays = days;
         if (travellers > 0) updated.numTravellers = travellers;
         if (budget > 0) updated.totalBudget = budget;
@@ -443,26 +421,26 @@ static void apiTripUpdate(int tripId, const char* name, const char* date, const 
 
         root = avlUpdateTrip(root, tripId, &updated);
         saveTripsToFile(root, filePath);
-        printf("{\"success\":true,\"message\":\"Trip ID %d updated successfully in AVL Tree.\"}\n", tripId);
+        printf("{\"success\":true,\"message\":\"Trip ID %d updated successfully.\"}\n", tripId);
     }
 
     freeAVLTree(root);
 }
 
 /* -------------------------------------------------------------------------
-   COMBINED COMPLETE TRIP PLANNER API
+   COMBINED COMPLETE TRIP PLANNER API (Single City Focus & Exact TSP)
    ------------------------------------------------------------------------- */
 
 static void apiFullTripPlan(const MasterData* data,
-                            int srcId, int destId,
+                            int destId,
                             int numDays, int numTravellers,
                             double userBudget, const char* travelStyle,
-                            int selectedHotelId, int preferExact,
+                            int selectedHotelId,
                             const char* customAttrIdsCsv) {
-    /* 1. Location & Route: Dijkstra Shortest Path */
-    DijkstraResult route = dijkstraShortestPath(&data->graph, srcId, destId);
+    const Location* city = findLocationById(data, destId);
+    const char* cityName = city ? city->name : "Selected City";
 
-    /* 2. Determine Attractions */
+    /* 1. Gather Attractions for Selected City */
     int attrIds[MAX_SELECTED_ATTRS];
     int attrCount = 0;
 
@@ -476,13 +454,11 @@ static void apiFullTripPlan(const MasterData* data,
             token = strtok(NULL, ",");
         }
     } else {
-        /* Auto-select attractions for destination */
-        for (int i = 0; i < data->numAttractions && attrCount < 6; i++) {
+        for (int i = 0; i < data->numAttractions && attrCount < 7; i++) {
             if (data->attractions[i].locationId == destId) {
                 attrIds[attrCount++] = data->attractions[i].id;
             }
         }
-        /* Fallback if needed */
         if (attrCount == 0) {
             for (int i = 0; i < 4 && i < data->numAttractions; i++) {
                 attrIds[attrCount++] = data->attractions[i].id;
@@ -490,41 +466,57 @@ static void apiFullTripPlan(const MasterData* data,
         }
     }
 
-    /* 3. Itinerary Optimization (Greedy vs Exact TSP + Day Schedule) */
-    FullItinerary itin = generateDayWiseItinerary(data, attrIds, attrCount, numDays, preferExact);
+    /* 2. Optimize Itinerary using Exact TSP only */
+    FullItinerary itin = generateDayWiseItinerary(data, attrIds, attrCount, numDays);
 
-    /* 4. Budget Calculation */
+    /* 3. Build Intra-City Route Hops */
+    double intraDistTotal = itin.totalDistanceKm;
+    int intraTimeTotal = itin.totalTravelTimeMin;
+
+    /* 4. Budget Calculation in INR (₹) */
     BudgetBreakdown budget = calculateBudget(data, userBudget, numDays, numTravellers,
                                              travelStyle, destId, selectedHotelId,
-                                             route.totalDistanceKm, itin.grandTotalTicketCost);
+                                             intraDistTotal, itin.grandTotalTicketCost);
 
     /* Output Unified JSON Response */
     printf("{\"success\":true,\"plan\":{");
 
-    /* Route Sub-object */
-    printf("\"route\":{\"reachable\":%s,\"srcId\":%d,\"destId\":%d,\"totalDistanceKm\":%.2f,\"totalTimeMin\":%d,\"totalTollCost\":%.2f,\"statusMessage\":",
-           route.reachable ? "true" : "false", route.srcId, route.destId, route.totalDistanceKm, route.totalTimeMin, route.totalTollCost);
-    printJsonString(route.statusMessage);
+    /* City info */
+    printf("\"destinationCity\":");
+    printJsonString(cityName);
+    printf(",\"cityId\":%d,", destId);
+
+    /* Route Sub-object (Intra-city tour connecting scheduled stops) */
+    printf("\"route\":{\"reachable\":true,\"destId\":%d,\"cityName\":", destId);
+    printJsonString(cityName);
+    printf(",\"totalDistanceKm\":%.2f,\"totalTimeMin\":%d,\"statusMessage\":",
+           intraDistTotal, intraTimeTotal);
+
+    char routeMsg[256];
+    snprintf(routeMsg, sizeof(routeMsg), "Optimal sightseeing circuit mapped across %d locations in %s (%.1f km total).",
+             itin.totalAttractionsScheduled, cityName, intraDistTotal);
+    printJsonString(routeMsg);
+
     printf(",\"hops\":[");
-    for (int i = 0; i < route.hopCount; i++) {
-        if (i > 0) printf(",");
-        printf("{\"fromName\":");
-        printJsonString(route.hops[i].fromName);
-        printf(",\"toName\":");
-        printJsonString(route.hops[i].toName);
-        printf(",\"distanceKm\":%.1f,\"travelTimeMin\":%d}", route.hops[i].distanceKm, route.hops[i].travelTimeMin);
+    int hopIndex = 0;
+    for (int d = 0; d < itin.numDays; d++) {
+        const DaySchedule* day = &itin.days[d];
+        for (int k = 0; k < day->itemCount - 1; k++) {
+            if (hopIndex > 0) printf(",");
+            printf("{\"day\":%d,\"fromName\":", day->dayNumber);
+            printJsonString(day->items[k].name);
+            printf(",\"toName\":");
+            printJsonString(day->items[k + 1].name);
+            printf(",\"distanceKm\":%.1f,\"travelTimeMin\":%d}",
+                   (double)(day->items[k + 1].travelTimeFromPrevMin) / 3.0, day->items[k + 1].travelTimeFromPrevMin);
+            hopIndex++;
+        }
     }
     printf("]},");
 
-    /* Itinerary Sub-object */
-    printf("\"itinerary\":{\"numDays\":%d,\"totalAttractionsScheduled\":%d,\"grandTotalTicketCost\":%.2f,",
-           itin.numDays, itin.totalAttractionsScheduled, itin.grandTotalTicketCost);
-    printf("\"comparison\":{\"distanceDiffKm\":%.2f,\"percentDiff\":%.2f,\"comment\":",
-           itin.comparison.distanceDiffKm, itin.comparison.percentDiff);
-    printJsonString(itin.comparison.comparisonComment);
-    printf(",\"recommendedAlgorithm\":");
-    printJsonString(itin.comparison.recommendedAlgorithm);
-    printf(",\"greedyKm\":%.2f,\"exactKm\":%.2f},", itin.comparison.greedy.totalDistanceKm, itin.comparison.exact.totalDistanceKm);
+    /* Itinerary Sub-object (Exact TSP Result) */
+    printf("\"itinerary\":{\"numDays\":%d,\"totalAttractionsScheduled\":%d,\"grandTotalTicketCost\":%.2f,\"totalDistanceKm\":%.2f,\"totalTravelTimeMin\":%d,",
+           itin.numDays, itin.totalAttractionsScheduled, itin.grandTotalTicketCost, itin.totalDistanceKm, itin.totalTravelTimeMin);
 
     printf("\"days\":[");
     for (int d = 0; d < itin.numDays; d++) {
@@ -548,7 +540,7 @@ static void apiFullTripPlan(const MasterData* data,
     }
     printf("]},");
 
-    /* Budget Sub-object */
+    /* Budget Sub-object in INR */
     printf("\"budget\":{\"userBudget\":%.2f,\"totalExpense\":%.2f,\"remainingBudget\":%.2f,\"hotelExpense\":%.2f,\"foodExpense\":%.2f,\"transportExpense\":%.2f,\"activityExpense\":%.2f,\"emergencyBuffer\":%.2f,\"status\":",
            budget.userBudget, budget.totalExpense, budget.remainingBudget, budget.hotelExpense, budget.foodExpense, budget.transportExpense, budget.activityExpense, budget.emergencyBuffer);
     printJsonString(budget.status);
@@ -594,85 +586,85 @@ static void runUnitTests(const MasterData* data, const HashTable* ht) {
     int passed = 0;
     int total = 6;
 
-    printf("\n=== RUNNING COMPREHENSIVE DSA UNIT TESTS ===\n\n");
+    printf("\n=== RUNNING TRIP PLANNER CORE ENGINE TESTS ===\n\n");
 
-    /* TEST 1: Dijkstra Shortest Path */
-    printf("[Test 1/6] Dijkstra Shortest Path (Delhi -> Jaipur)... ");
-    DijkstraResult r1 = dijkstraShortestPath(&data->graph, 0, 2);
-    if (r1.reachable && r1.totalDistanceKm > 200.0 && r1.pathLength >= 2) {
-        printf("PASSED (Distance: %.1f km, Path Length: %d)\n", r1.totalDistanceKm, r1.pathLength);
+    /* TEST 1: Shortest Path Route (Pune -> Mumbai) */
+    printf("[Test 1/6] Shortest Path Navigation (Pune -> Mumbai)... ");
+    DijkstraResult r1 = dijkstraShortestPath(&data->graph, 13, 6);
+    if (r1.reachable && r1.totalDistanceKm > 100.0 && r1.pathLength >= 2) {
+        printf("PASSED (Distance: %.1f km via Expressway)\n", r1.totalDistanceKm);
         passed++;
     } else {
         printf("FAILED\n");
     }
 
-    /* TEST 2: Dijkstra Unreachable Node */
-    printf("[Test 2/6] Dijkstra Unreachable Location (Delhi -> Port Blair)... ");
-    DijkstraResult r2 = dijkstraShortestPath(&data->graph, 0, 12);
+    /* TEST 2: Unreachable Destination Handling */
+    printf("[Test 2/6] Unreachable Destination Detection (Pune -> Port Blair)... ");
+    DijkstraResult r2 = dijkstraShortestPath(&data->graph, 13, 12);
     if (!r2.reachable) {
-        printf("PASSED (Correctly flagged unreachable)\n");
+        printf("PASSED (Correctly identified unreachable route)\n");
         passed++;
     } else {
         printf("FAILED\n");
     }
 
-    /* TEST 3: Greedy vs Exact TSP Itinerary Optimization */
-    printf("[Test 3/6] TSP Itinerary Optimization (4 attractions)... ");
+    /* TEST 3: Exact TSP Itinerary Optimization */
+    printf("[Test 3/6] Exact TSP Itinerary Optimization (Pune Attractions)... ");
     int sampleAttrs[] = { 1, 2, 3, 4 };
     double dMat[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS];
     int tMat[MAX_SELECTED_ATTRS][MAX_SELECTED_ATTRS];
     buildDistanceMatrix(data, sampleAttrs, 4, dMat, tMat);
-    TSPComparison comp = compareItineraryAlgorithms(4, dMat, tMat);
-    if (comp.exact.totalDistanceKm <= comp.greedy.totalDistanceKm + 0.001) {
-        printf("PASSED (Greedy: %.1f km, Exact: %.1f km)\n", comp.greedy.totalDistanceKm, comp.exact.totalDistanceKm);
+    TSPResult tsp = solveExactTSP(4, dMat, tMat);
+    if (tsp.isOptimal && tsp.totalDistanceKm > 0.0) {
+        printf("PASSED (Optimal tour: %.1f km)\n", tsp.totalDistanceKm);
         passed++;
     } else {
         printf("FAILED\n");
     }
 
-    /* TEST 4: Hotel Min-Heap & QuickSort Budget System */
-    printf("[Test 4/6] Budget Engine & Hotel Min-Heap... ");
-    BudgetBreakdown b = calculateBudget(data, 1000.0, 3, 2, "Standard", 1, -1, 233.0, 50.0);
+    /* TEST 4: Budget Engine & Accommodations in INR */
+    printf("[Test 4/6] Budget Calculator in INR (₹)... ");
+    BudgetBreakdown b = calculateBudget(data, 25000.0, 3, 2, "Standard", 13, -1, 35.0, 500.0);
     if (b.totalExpense > 0 && b.topRecommendedCount > 0) {
-        printf("PASSED (Total: $%.2f, Status: %s)\n", b.totalExpense, b.status);
+        printf("PASSED (Estimated: INR %.0f, Status: %s)\n", b.totalExpense, b.status);
         passed++;
     } else {
         printf("FAILED\n");
     }
 
-    /* TEST 5: Hash Table Search */
-    printf("[Test 5/6] Hash Table Attraction Search ('Taj')... ");
+    /* TEST 5: Attraction Search */
+    printf("[Test 5/6] Attraction Search for 'Shaniwar'... ");
     int searchRes[10];
-    int sCount = searchAttractions(ht, data, "Taj", "All", searchRes, 10);
+    int sCount = searchAttractions(ht, data, "Shaniwar", "All", searchRes, 10);
     if (sCount >= 1) {
         const Attraction* matched = findAttractionById(data, searchRes[0]);
-        printf("PASSED (Found %d matches, Top: %s)\n", sCount, matched ? matched->name : "Unknown");
+        printf("PASSED (Found: %s)\n", matched ? matched->name : "Unknown");
         passed++;
     } else {
         printf("FAILED\n");
     }
 
-    /* TEST 6: AVL Tree Insert, Search, and Rebalance */
-    printf("[Test 6/6] AVL Tree Insert & Search by ID... ");
+    /* TEST 6: Saved Trips Persistence & Lookup */
+    printf("[Test 6/6] Saved Trips Persistence & Retrieval... ");
     AVLNode* testTree = NULL;
-    TripRecord tSample = { 9999, "Test Journey", "2026-12-01", 20261201, "Delhi", "Agra", 3, 2, 800.0, 550.0, 233.0, "Standard", "Unit test node" };
+    TripRecord tSample = { 9999, "Pune Monsoon Tour", "2026-12-01", 20261201, "Pune", "Pune", 3, 2, 25000.0, 18500.0, 48.0, "Standard", "Unit test" };
     testTree = avlInsertTrip(testTree, &tSample);
     const AVLNode* foundNode = avlSearchTripById(testTree, 9999);
-    if (foundNode && strcmp(foundNode->trip.tripName, "Test Journey") == 0) {
+    if (foundNode && strcmp(foundNode->trip.tripName, "Pune Monsoon Tour") == 0) {
         testTree = avlDeleteTripById(testTree, 9999);
         const AVLNode* afterDelete = avlSearchTripById(testTree, 9999);
         if (!afterDelete) {
-            printf("PASSED (Insert, Search, Delete & AVL Balance verified)\n");
+            printf("PASSED (Trip Record CRUD & Balance Verified)\n");
             passed++;
         } else {
-            printf("FAILED (Delete verification failed)\n");
+            printf("FAILED (Deletion check)\n");
         }
     } else {
         printf("FAILED\n");
     }
     freeAVLTree(testTree);
 
-    printf("\nTEST SUMMARY: %d / %d tests passed successfully!\n\n", passed, total);
+    printf("\nTEST REPORT: %d / %d tests passed successfully!\n\n", passed, total);
 }
 
 /* -------------------------------------------------------------------------
@@ -681,16 +673,16 @@ static void runUnitTests(const MasterData* data, const HashTable* ht) {
 
 static void printCliMenu(void) {
     printf("\n=================================================================\n");
-    printf("                  TRIP PLANNER - C DSA CORE ENGINE               \n");
+    printf("                        TRIP PLANNER ENGINE                      \n");
     printf("=================================================================\n");
-    printf(" 1. View All Destinations & Road Network (Graph Adjacency List)  \n");
-    printf(" 2. Find Shortest Route & Road Hops (Dijkstra + Min-Heap)        \n");
-    printf(" 3. Optimize Itinerary (Greedy Nearest Neighbor vs Exact TSP)    \n");
-    printf(" 4. Calculate Budget & Hotel Recommendations (Min-Heap & Sort)   \n");
-    printf(" 5. Search Attractions by Name / Category (Hash Table)           \n");
-    printf(" 6. Trip Management (AVL Tree: Add, Search, List, Delete)        \n");
-    printf(" 7. Generate Full Complete Trip Plan                             \n");
-    printf(" 8. Run Comprehensive DSA Unit Tests                             \n");
+    printf(" 1. View All Destinations (Including Pune)                       \n");
+    printf(" 2. Plan Route Between Cities                                    \n");
+    printf(" 3. Optimize Itinerary with Exact TSP (Pune Attractions)         \n");
+    printf(" 4. Calculate Trip Budget & Hotel Recommendations in INR (₹)     \n");
+    printf(" 5. Search Attractions by Name or Category                       \n");
+    printf(" 6. View & Manage Saved Trips                                    \n");
+    printf(" 7. Plan Complete Trip for a City (e.g. Pune)                    \n");
+    printf(" 8. Run Core Engine Unit Tests                                   \n");
     printf(" 9. Exit                                                         \n");
     printf("=================================================================\n");
     printf("Enter choice (1-9): ");
@@ -709,7 +701,7 @@ static void runInteractiveCli(MasterData* data, HashTable* ht) {
 
         switch (choice) {
             case 1: {
-                printf("\n--- REGISTERED DESTINATIONS (%d locations) ---\n", data->graph.numLocations);
+                printf("\n--- AVAILABLE DESTINATIONS (%d cities) ---\n", data->graph.numLocations);
                 for (int i = 0; i < data->graph.numLocations; i++) {
                     const Location* loc = &data->graph.locations[i];
                     printf("[%2d] %-14s (%-14s) - %s\n", loc->id, loc->name, loc->state, loc->description);
@@ -717,18 +709,18 @@ static void runInteractiveCli(MasterData* data, HashTable* ht) {
                 break;
             }
             case 2: {
-                int src = 0, dest = 0;
-                printf("Enter Origin Location ID (0-%d): ", data->graph.numLocations - 1);
+                int src = 13, dest = 6;
+                printf("Enter Origin City ID (0-%d) [default 13 for Pune]: ", data->graph.numLocations - 1);
                 scanf("%d", &src);
-                printf("Enter Destination Location ID (0-%d): ", data->graph.numLocations - 1);
+                printf("Enter Destination City ID (0-%d) [default 6 for Mumbai]: ", data->graph.numLocations - 1);
                 scanf("%d", &dest);
                 DijkstraResult r = dijkstraShortestPath(&data->graph, src, dest);
-                printf("\n--- DIJKSTRA ROUTE RESULT ---\n");
+                printf("\n--- ROUTE DETAILS ---\n");
                 printf("Status: %s\n", r.statusMessage);
                 if (r.reachable) {
-                    printf("Total Distance: %.1f km | Travel Time: %d hrs %d mins | Tolls: $%.2f\n",
+                    printf("Distance: %.1f km | Travel Time: %d hrs %d mins | Highway Tolls: INR %.0f\n",
                            r.totalDistanceKm, r.totalTimeMin / 60, r.totalTimeMin % 60, r.totalTollCost);
-                    printf("Route Path: ");
+                    printf("Route: ");
                     for (int i = 0; i < r.pathLength; i++) {
                         printf("%s%s", data->graph.locations[r.path[i]].name, (i < r.pathLength - 1) ? " -> " : "\n");
                     }
@@ -736,68 +728,65 @@ static void runInteractiveCli(MasterData* data, HashTable* ht) {
                 break;
             }
             case 3: {
-                int nAttrs = 4;
-                int sampleIds[] = { 1, 2, 3, 4 };
-                printf("\n--- ITINERARY OPTIMIZATION (Sample 4 Delhi Attractions) ---\n");
-                FullItinerary itin = generateDayWiseItinerary(data, sampleIds, nAttrs, 2, 1);
-                printf("Greedy Nearest-Neighbor: %.1f km (%ld us)\n", itin.comparison.greedy.totalDistanceKm, itin.comparison.greedy.executionTimeMicrosec);
-                printf("Exact TSP (Backtracking): %.1f km (%ld us)\n", itin.comparison.exact.totalDistanceKm, itin.comparison.exact.executionTimeMicrosec);
-                printf("Comment: %s\n", itin.comparison.comparisonComment);
-                printf("Recommended: %s\n", itin.comparison.recommendedAlgorithm);
+                int sampleIds[] = { 1, 2, 3, 4 }; /* Pune attractions */
+                printf("\n--- EXACT TSP ITINERARY OPTIMIZATION (Pune) ---\n");
+                FullItinerary itin = generateDayWiseItinerary(data, sampleIds, 4, 2);
+                printf("Total Distance: %.1f km | Travel Time: %d mins | Scheduled: %d stops\n",
+                       itin.totalDistanceKm, itin.totalTravelTimeMin, itin.totalAttractionsScheduled);
                 break;
             }
             case 4: {
-                double budget = 1200.0;
-                printf("Enter Total Trip Budget in USD [default 1200]: ");
+                double budget = 25000.0;
+                printf("Enter Total Trip Budget in INR [default 25000]: ");
                 scanf("%lf", &budget);
-                BudgetBreakdown b = calculateBudget(data, budget, 3, 2, "Standard", 1, -1, 233.0, 45.0);
-                printf("\n--- ITEMIZED BUDGET BREAKDOWN ---\n");
-                printf("User Budget:       $%.2f\n", b.userBudget);
-                printf("Hotel Expense:     $%.2f (%s)\n", b.hotelExpense, b.selectedHotel.name);
-                printf("Food Expense:      $%.2f\n", b.foodExpense);
-                printf("Transport Expense: $%.2f\n", b.transportExpense);
-                printf("Activity Expense:  $%.2f\n", b.activityExpense);
-                printf("Emergency Buffer:  $%.2f\n", b.emergencyBuffer);
+                BudgetBreakdown b = calculateBudget(data, budget, 3, 2, "Standard", 13, -1, 35.0, 450.0);
+                printf("\n--- ITEMIZED BUDGET BREAKDOWN (INR) ---\n");
+                printf("Allocated Budget:  INR %.2f\n", b.userBudget);
+                printf("Hotel Expense:     INR %.2f (%s)\n", b.hotelExpense, b.selectedHotel.name);
+                printf("Food Expense:      INR %.2f\n", b.foodExpense);
+                printf("Transport Expense: INR %.2f\n", b.transportExpense);
+                printf("Activity Expense:  INR %.2f\n", b.activityExpense);
+                printf("Emergency Buffer:  INR %.2f\n", b.emergencyBuffer);
                 printf("-----------------------------------------\n");
-                printf("Total Estimated:   $%.2f\n", b.totalExpense);
-                printf("Remaining Budget:  $%.2f (%s)\n", b.remainingBudget, b.status);
+                printf("Total Estimated:   INR %.2f\n", b.totalExpense);
+                printf("Remaining Buffer:  INR %.2f (%s)\n", b.remainingBudget, b.status);
                 printf("Alert Note:        %s\n", b.warningMessage);
                 break;
             }
             case 5: {
                 char q[64];
-                printf("Enter search term (e.g. Fort, Palace, Lake, Temple): ");
+                printf("Enter search term (e.g. Fort, Palace, Lake, Temple, Wada): ");
                 scanf("%63s", q);
                 int results[20];
                 int count = searchAttractions(ht, data, q, "All", results, 20);
-                printf("\nFound %d matches in Hash Table for '%s':\n", count, q);
+                printf("\nFound %d matches for '%s':\n", count, q);
                 for (int i = 0; i < count; i++) {
                     const Attraction* a = findAttractionById(data, results[i]);
                     if (a) {
-                        printf(" - %-25s [%-11s] Rating: %.1f | Fee: $%.2f\n", a->name, a->category, a->rating, a->ticketCost);
+                        printf(" - %-28s [%-11s] Rating: %.1f | Ticket: INR %.0f\n", a->name, a->category, a->rating, a->ticketCost);
                     }
                 }
                 break;
             }
             case 6: {
-                printf("\n--- TRIP MANAGEMENT (AVL TREE) ---\n");
+                printf("\n--- SAVED TRIPS ---\n");
                 AVLNode* root = NULL;
                 loadTripsFromFile(&root, getTripsFilePath());
                 TripRecord list[MAX_SAVED_TRIPS];
                 int count = 0;
                 avlCollectInOrder(root, list, &count, MAX_SAVED_TRIPS);
-                printf("Total Saved Trips in AVL Tree: %d\n", count);
+                printf("Total Saved Trips: %d\n", count);
                 for (int i = 0; i < count; i++) {
-                    printf("[%d] Date: %s | %s -> %s | %d Days | Est: $%.2f | %s\n",
-                           list[i].tripId, list[i].startDate, list[i].sourceLocation,
-                           list[i].destLocation, list[i].numDays, list[i].estimatedCost, list[i].tripName);
+                    printf("[%d] Date: %s | City: %s | %d Days | Est: INR %.0f | %s\n",
+                           list[i].tripId, list[i].startDate, list[i].destLocation,
+                           list[i].numDays, list[i].estimatedCost, list[i].tripName);
                 }
                 freeAVLTree(root);
                 break;
             }
             case 7: {
-                printf("\n--- FULL COMPLETE TRIP PLAN (Delhi to Agra) ---\n");
-                apiFullTripPlan(data, 0, 1, 3, 2, 900.0, "Standard", -1, 1, NULL);
+                printf("\n--- COMPLETE TRIP PLAN (Pune, 3 Days) ---\n");
+                apiFullTripPlan(data, 13, 3, 2, 25000.0, "Standard", -1, NULL);
                 break;
             }
             case 8: {
@@ -805,7 +794,7 @@ static void runInteractiveCli(MasterData* data, HashTable* ht) {
                 break;
             }
             case 9:
-                printf("\nExiting Trip Planner. Have a great journey!\n");
+                printf("\nExiting Trip Planner. Have a wonderful journey!\n");
                 return;
             default:
                 printf("Invalid option. Please enter 1 to 9.\n");
@@ -824,7 +813,6 @@ int main(int argc, char* argv[]) {
     HashTable* ht = createHashTable();
     buildAttractionSearchIndex(ht, &data);
 
-    /* Check for API mode */
     if (argc >= 2 && strcmp(argv[1], "--api") == 0) {
         if (argc < 3) {
             printf("{\"success\":false,\"error\":\"Missing API command\"}\n");
@@ -841,54 +829,75 @@ int main(int argc, char* argv[]) {
         } else if (strcmp(cmd, "get_hotels") == 0) {
             apiGetHotels(&data);
         } else if (strcmp(cmd, "plan_route") == 0) {
-            int src = (argc >= 4) ? atoi(argv[3]) : 0;
-            int dest = (argc >= 5) ? atoi(argv[4]) : 1;
+            int src = (argc >= 4) ? atoi(argv[3]) : 13;
+            int dest = (argc >= 5) ? atoi(argv[4]) : 6;
             apiPlanRoute(&data, src, dest);
         } else if (strcmp(cmd, "optimize_itinerary") == 0) {
-            int days = (argc >= 4) ? atoi(argv[3]) : 2;
-            int preferExact = (argc >= 5) ? atoi(argv[4]) : 1;
-            const char* csv = (argc >= 6) ? argv[5] : NULL;
-            apiOptimizeItinerary(&data, days, preferExact, csv);
+            int days = (argc >= 4) ? atoi(argv[3]) : 3;
+            const char* csv = (argc >= 5 && strcmp(argv[4], "_NONE_") != 0) ? argv[4] : NULL;
+            apiOptimizeItinerary(&data, days, csv);
         } else if (strcmp(cmd, "calculate_budget") == 0) {
-            double budget = (argc >= 4) ? atof(argv[3]) : 1000.0;
+            double budget = (argc >= 4) ? atof(argv[3]) : 25000.0;
             int days = (argc >= 5) ? atoi(argv[4]) : 3;
             int travellers = (argc >= 6) ? atoi(argv[5]) : 2;
             const char* style = (argc >= 7) ? argv[6] : "Standard";
-            int destId = (argc >= 8) ? atoi(argv[7]) : 1;
+            int destId = (argc >= 8) ? atoi(argv[7]) : 13;
             int hotelId = (argc >= 9) ? atoi(argv[8]) : -1;
-            double dist = (argc >= 10) ? atof(argv[9]) : 233.0;
-            double actCost = (argc >= 11) ? atof(argv[10]) : 45.0;
+            double dist = (argc >= 10) ? atof(argv[9]) : 35.0;
+            double actCost = (argc >= 11) ? atof(argv[10]) : 500.0;
             apiCalculateBudget(&data, budget, days, travellers, style, destId, hotelId, dist, actCost);
         } else if (strcmp(cmd, "search_attractions") == 0) {
             const char* query = (argc >= 4 && strcmp(argv[3], "_EMPTY_") != 0) ? argv[3] : "";
             const char* cat = (argc >= 5 && strcmp(argv[4], "_EMPTY_") != 0) ? argv[4] : "All";
             apiSearchAttractions(&data, ht, query, cat);
         } else if (strcmp(cmd, "full_trip_plan") == 0) {
-            int src = (argc >= 4) ? atoi(argv[3]) : 0;
-            int dest = (argc >= 5) ? atoi(argv[4]) : 1;
-            int days = (argc >= 6) ? atoi(argv[5]) : 3;
-            int travellers = (argc >= 7) ? atoi(argv[6]) : 2;
-            double budget = (argc >= 8) ? atof(argv[7]) : 1000.0;
-            const char* style = (argc >= 9) ? argv[8] : "Standard";
-            int hotelId = (argc >= 10) ? atoi(argv[9]) : -1;
-            int preferExact = (argc >= 11) ? atoi(argv[10]) : 1;
-            const char* attrCsv = (argc >= 12 && strcmp(argv[11], "_NONE_") != 0) ? argv[11] : NULL;
-            apiFullTripPlan(&data, src, dest, days, travellers, budget, style, hotelId, preferExact, attrCsv);
+            /* Support both:
+               full_trip_plan <destId> <days> <travellers> <budget> <travelStyle> <hotelId> [attrCsv]
+               OR full_trip_plan <srcId> <destId> <days> <travellers> <budget> <travelStyle> <hotelId> [attrCsv]
+            */
+            int destId = 13;
+            int days = 3;
+            int travellers = 2;
+            double budget = 25000.0;
+            const char* style = "Standard";
+            int hotelId = -1;
+            const char* attrCsv = NULL;
+
+            if (argc >= 11) {
+                /* Form: srcId destId days travellers budget style hotelId attrCsv */
+                destId = atoi(argv[4]);
+                days = atoi(argv[5]);
+                travellers = atoi(argv[6]);
+                budget = atof(argv[7]);
+                style = argv[8];
+                hotelId = atoi(argv[9]);
+                if (argc >= 11 && strcmp(argv[10], "_NONE_") != 0) attrCsv = argv[10];
+            } else {
+                /* Form: destId days travellers budget style hotelId attrCsv */
+                if (argc >= 4) destId = atoi(argv[3]);
+                if (argc >= 5) days = atoi(argv[4]);
+                if (argc >= 6) travellers = atoi(argv[5]);
+                if (argc >= 7) budget = atof(argv[6]);
+                if (argc >= 8) style = argv[7];
+                if (argc >= 9) hotelId = atoi(argv[8]);
+                if (argc >= 10 && strcmp(argv[9], "_NONE_") != 0) attrCsv = argv[9];
+            }
+
+            apiFullTripPlan(&data, destId, days, travellers, budget, style, hotelId, attrCsv);
         } else if (strcmp(cmd, "trip_list") == 0) {
             apiTripList();
         } else if (strcmp(cmd, "trip_add") == 0) {
-            const char* name = (argc >= 4) ? argv[3] : "Golden Triangle Tour";
+            const char* name = (argc >= 4) ? argv[3] : "Pune City Expedition";
             const char* date = (argc >= 5) ? argv[4] : "2026-11-20";
-            const char* src = (argc >= 6) ? argv[5] : "Delhi";
-            const char* dest = (argc >= 7) ? argv[6] : "Agra";
-            int days = (argc >= 8) ? atoi(argv[7]) : 3;
-            int travellers = (argc >= 9) ? atoi(argv[8]) : 2;
-            double budget = (argc >= 10) ? atof(argv[9]) : 1000.0;
-            double cost = (argc >= 11) ? atof(argv[10]) : 650.0;
-            double dist = (argc >= 12) ? atof(argv[11]) : 233.0;
-            const char* style = (argc >= 13) ? argv[12] : "Standard";
-            const char* notes = (argc >= 14) ? argv[13] : "Planned with Trip Planner C Engine";
-            apiTripAdd(name, date, src, dest, days, travellers, budget, cost, dist, style, notes);
+            const char* dest = (argc >= 6) ? argv[5] : "Pune";
+            int days = (argc >= 7) ? atoi(argv[6]) : 3;
+            int travellers = (argc >= 8) ? atoi(argv[7]) : 2;
+            double budget = (argc >= 9) ? atof(argv[8]) : 25000.0;
+            double cost = (argc >= 10) ? atof(argv[9]) : 18500.0;
+            double dist = (argc >= 11) ? atof(argv[10]) : 45.0;
+            const char* style = (argc >= 12) ? argv[11] : "Standard";
+            const char* notes = (argc >= 13) ? argv[12] : "Planned with Trip Planner";
+            apiTripAdd(name, date, dest, days, travellers, budget, cost, dist, style, notes);
         } else if (strcmp(cmd, "trip_get") == 0) {
             int id = (argc >= 4) ? atoi(argv[3]) : 0;
             apiTripGet(id);
@@ -899,16 +908,15 @@ int main(int argc, char* argv[]) {
             int id = (argc >= 4) ? atoi(argv[3]) : 0;
             const char* name = (argc >= 5) ? argv[4] : NULL;
             const char* date = (argc >= 6) ? argv[5] : NULL;
-            const char* src = (argc >= 7) ? argv[6] : NULL;
-            const char* dest = (argc >= 8) ? argv[7] : NULL;
-            int days = (argc >= 9) ? atoi(argv[8]) : 0;
-            int travellers = (argc >= 10) ? atoi(argv[9]) : 0;
-            double budget = (argc >= 11) ? atof(argv[10]) : 0.0;
-            double cost = (argc >= 12) ? atof(argv[11]) : 0.0;
-            double dist = (argc >= 13) ? atof(argv[12]) : 0.0;
-            const char* style = (argc >= 14) ? argv[13] : NULL;
-            const char* notes = (argc >= 15) ? argv[14] : NULL;
-            apiTripUpdate(id, name, date, src, dest, days, travellers, budget, cost, dist, style, notes);
+            const char* dest = (argc >= 7) ? argv[6] : NULL;
+            int days = (argc >= 8) ? atoi(argv[7]) : 0;
+            int travellers = (argc >= 9) ? atoi(argv[8]) : 0;
+            double budget = (argc >= 10) ? atof(argv[9]) : 0.0;
+            double cost = (argc >= 11) ? atof(argv[10]) : 0.0;
+            double dist = (argc >= 12) ? atof(argv[11]) : 0.0;
+            const char* style = (argc >= 13) ? argv[12] : NULL;
+            const char* notes = (argc >= 14) ? argv[13] : NULL;
+            apiTripUpdate(id, name, date, dest, days, travellers, budget, cost, dist, style, notes);
         } else if (strcmp(cmd, "run_tests") == 0) {
             runUnitTests(&data, ht);
         } else {
@@ -924,4 +932,3 @@ int main(int argc, char* argv[]) {
     freeHashTable(ht);
     return 0;
 }
-

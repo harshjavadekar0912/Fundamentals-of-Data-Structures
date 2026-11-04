@@ -1,6 +1,7 @@
 /**
  * script.js - Frontend application controller for TripPlanner.
- * Communicates with Node.js Express API -> C DSA Engine.
+ * Includes Dark/Light theme switching, single-city planning,
+ * Indian Rupee (INR ₹) formatting, and Exact TSP itinerary rendering.
  */
 
 // Application State
@@ -15,9 +16,25 @@ const state = {
   searchDebounceTimer: null
 };
 
+// Helper: Format amount in Indian Rupees (INR)
+function formatINR(amount) {
+  if (amount === undefined || amount === null || isNaN(amount)) return '₹0';
+  return '₹' + Math.round(amount).toLocaleString('en-IN');
+}
+
+// Helper: format HHMM to AM/PM time
+function formatHHMM(hhmm) {
+  const hours = Math.floor(hhmm / 100);
+  const mins = hhmm % 100;
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 === 0 ? 12 : hours % 12;
+  return `${String(displayHours).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${period}`;
+}
+
 // DOM Elements
 const elements = {
-  selectSrc: document.getElementById('select-src'),
+  themeToggleBtn: document.getElementById('theme-toggle-btn'),
+  themeLabelText: document.getElementById('theme-label-text'),
   selectDest: document.getElementById('select-dest'),
   inputDays: document.getElementById('input-days'),
   inputTravellers: document.getElementById('input-travellers'),
@@ -29,28 +46,18 @@ const elements = {
   btnGeneratePlan: document.getElementById('btn-generate-plan'),
   planLoader: document.getElementById('plan-loader'),
   resultsSection: document.getElementById('results-section'),
-  btnSaveTripAvl: document.getElementById('btn-save-trip-avl'),
+  btnSaveTrip: document.getElementById('btn-save-trip'),
   btnPrintPlan: document.getElementById('btn-print-plan'),
 
   // Route metrics
   metricDist: document.getElementById('metric-dist'),
   metricTime: document.getElementById('metric-time'),
-  metricTolls: document.getElementById('metric-tolls'),
-  metricHops: document.getElementById('metric-hops'),
+  metricStops: document.getElementById('metric-stops'),
+  metricDays: document.getElementById('metric-days'),
   routeStatusAlert: document.getElementById('route-status-alert'),
   routeStatusText: document.getElementById('route-status-text'),
   routeReachableBadge: document.getElementById('route-reachable-badge'),
   hopsContainer: document.getElementById('hops-container'),
-
-  // TSP Comparison
-  compGreedyDist: document.getElementById('comp-greedy-dist'),
-  compGreedyTime: document.getElementById('comp-greedy-time'),
-  compGreedyUs: document.getElementById('comp-greedy-us'),
-  compExactDist: document.getElementById('comp-exact-dist'),
-  compExactTime: document.getElementById('comp-exact-time'),
-  compExactUs: document.getElementById('comp-exact-us'),
-  compCommentary: document.getElementById('comp-commentary'),
-  compRecommendation: document.getElementById('comp-recommendation'),
 
   // Day schedules
   daySchedulesList: document.getElementById('day-schedules-list'),
@@ -92,15 +99,32 @@ const elements = {
   savedCountNav: document.getElementById('saved-count-nav'),
   inputTripFilter: document.getElementById('input-trip-filter'),
   btnRefreshTrips: document.getElementById('btn-refresh-trips'),
-
-  // Unit Test Modal
-  btnRunTests: document.getElementById('btn-run-tests'),
-  testModal: document.getElementById('test-modal'),
-  modalCloseBtn: document.getElementById('modal-close-btn'),
-  modalOkBtn: document.getElementById('modal-ok-btn'),
-  testOutputConsole: document.getElementById('test-output-console'),
   toastContainer: document.getElementById('toast-container')
 };
+
+/* -------------------------------------------------------------------------
+   DARK / LIGHT THEME TOGGLE WITH LOCALSTORAGE PERSISTENCE
+   ------------------------------------------------------------------------- */
+function initTheme() {
+  const savedTheme = localStorage.getItem('tripPlannerTheme') || 'light';
+  applyTheme(savedTheme);
+
+  elements.themeToggleBtn.addEventListener('click', () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(nextTheme);
+  });
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('tripPlannerTheme', theme);
+  if (theme === 'dark') {
+    elements.themeLabelText.textContent = 'Light Mode';
+  } else {
+    elements.themeLabelText.textContent = 'Dark Mode';
+  }
+}
 
 /* -------------------------------------------------------------------------
    NOTIFICATION TOASTS
@@ -120,6 +144,8 @@ function showToast(message, type = 'info') {
    INITIAL DATA FETCHING
    ------------------------------------------------------------------------- */
 async function initAppData() {
+  initTheme();
+
   try {
     const [locRes, attrRes, hotelRes, tripsRes] = await Promise.all([
       fetch('/api/locations').then(r => r.json()),
@@ -130,18 +156,18 @@ async function initAppData() {
 
     if (locRes.success) {
       state.locations = locRes.locations;
-      populateLocationDropdowns();
+      populateLocationDropdown();
       document.getElementById('stat-locations').textContent = state.locations.length;
     }
 
     if (attrRes.success) {
       state.attractions = attrRes.attractions;
-      document.getElementById('stat-attractions').textContent = state.attractions.length;
+      document.getElementById('stat-attractions').textContent = state.attractions.length + '+';
     }
 
     if (hotelRes.success) {
       state.hotels = hotelRes.hotels;
-      document.getElementById('stat-hotels').textContent = state.hotels.length;
+      document.getElementById('stat-hotels').textContent = state.hotels.length + '+';
     }
 
     if (tripsRes.success) {
@@ -149,36 +175,39 @@ async function initAppData() {
       renderSavedTripsTable(state.savedTrips);
     }
 
-    // Initial search load
     executeSearch();
 
   } catch (err) {
     console.error('Initialization error:', err);
-    showToast('Failed to connect to C backend server. Please verify server is running.', 'error');
+    showToast('Failed to connect to backend server. Please verify server is running.', 'error');
   }
 }
 
-function populateLocationDropdowns() {
-  elements.selectSrc.innerHTML = '';
+function populateLocationDropdown() {
   elements.selectDest.innerHTML = '';
 
-  state.locations.forEach(loc => {
-    const optSrc = document.createElement('option');
-    optSrc.value = loc.id;
-    optSrc.textContent = `${loc.name} (${loc.state})`;
-    elements.selectSrc.appendChild(optSrc);
+  // Sort locations so Pune and major cities are at the top
+  const sortedLocations = [...state.locations].sort((a, b) => {
+    if (a.name === 'Pune') return -1;
+    if (b.name === 'Pune') return 1;
+    return a.name.localeCompare(b.name);
+  });
 
+  sortedLocations.forEach(loc => {
     const optDest = document.createElement('option');
     optDest.value = loc.id;
     optDest.textContent = `${loc.name} (${loc.state})`;
     elements.selectDest.appendChild(optDest);
   });
 
-  // Defaults: Delhi (0) to Agra (1)
-  if (state.locations.length > 1) {
-    elements.selectSrc.value = '0';
-    elements.selectDest.value = '1';
-    updateAttractionChipsForDestination(1);
+  // Default to Pune (id: 13) or first location
+  const puneLoc = state.locations.find(l => l.name.toLowerCase() === 'pune');
+  if (puneLoc) {
+    elements.selectDest.value = String(puneLoc.id);
+    updateAttractionChipsForDestination(puneLoc.id);
+  } else if (sortedLocations.length > 0) {
+    elements.selectDest.value = String(sortedLocations[0].id);
+    updateAttractionChipsForDestination(sortedLocations[0].id);
   }
 }
 
@@ -250,14 +279,11 @@ elements.btnClearAttrs.addEventListener('click', () => {
 elements.tripForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const srcId = parseInt(elements.selectSrc.value, 10);
   const destId = parseInt(elements.selectDest.value, 10);
   const numDays = parseInt(elements.inputDays.value, 10);
   const numTravellers = parseInt(elements.inputTravellers.value, 10);
   const userBudget = parseFloat(elements.inputBudget.value);
   const travelStyle = document.querySelector('input[name="travelStyle"]:checked').value;
-  const algoMode = document.querySelector('input[name="algoMode"]:checked').value;
-  const preferExact = (algoMode === 'greedy') ? 0 : 1;
 
   const attrIds = Array.from(state.selectedAttrIds);
 
@@ -269,13 +295,11 @@ elements.tripForm.addEventListener('submit', async (e) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        srcId,
         destId,
         numDays,
         numTravellers,
         userBudget,
         travelStyle,
-        preferExact,
         attrIds
       })
     });
@@ -289,98 +313,70 @@ elements.tripForm.addEventListener('submit', async (e) => {
 
     state.currentPlan = {
       ...data.plan,
-      formParams: { srcId, destId, numDays, numTravellers, userBudget, travelStyle }
+      formParams: { destId, numDays, numTravellers, userBudget, travelStyle }
     };
 
     renderTripPlanDashboard(state.currentPlan);
     elements.resultsSection.classList.remove('hidden');
     elements.resultsSection.scrollIntoView({ behavior: 'smooth' });
-    showToast('Complete trip blueprint computed successfully in C!', 'success');
+    showToast('Your personalized itinerary has been created!', 'success');
 
   } catch (err) {
     console.error('Plan generation error:', err);
-    showToast('Communication error with C backend API.', 'error');
+    showToast('Communication error with travel server.', 'error');
   } finally {
     elements.planLoader.style.display = 'none';
     elements.btnGeneratePlan.disabled = false;
   }
 });
 
-function formatHHMM(hhmm) {
-  const hours = Math.floor(hhmm / 100);
-  const mins = hhmm % 100;
-  const period = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 === 0 ? 12 : hours % 12;
-  return `${String(displayHours).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${period}`;
-}
-
 function renderTripPlanDashboard(plan) {
   const { route, itinerary, budget, formParams } = plan;
-
-  const srcLoc = state.locations.find(l => l.id === formParams.srcId);
   const destLoc = state.locations.find(l => l.id === formParams.destId);
+  const cityName = destLoc ? destLoc.name : (plan.destinationCity || 'Destination');
 
   document.getElementById('plan-title-heading').textContent =
-    `${srcLoc ? srcLoc.name : 'Origin'} to ${destLoc ? destLoc.name : 'Destination'} Expedition`;
+    `${cityName} City Vacation Blueprint`;
   document.getElementById('plan-sub-heading').textContent =
-    `${formParams.numDays} Days • ${formParams.numTravellers} Travelers • ${formParams.travelStyle} Style • Fully Optimized in C`;
+    `${formParams.numDays} Days • ${formParams.numTravellers} Guests • ${formParams.travelStyle} Style • Fully Optimized`;
 
   /* 1. Route Section */
   elements.metricDist.textContent = `${route.totalDistanceKm.toFixed(1)} km`;
   const hrs = Math.floor(route.totalTimeMin / 60);
   const mins = route.totalTimeMin % 60;
-  elements.metricTime.textContent = `${hrs}h ${mins}m`;
-  elements.metricTolls.textContent = `$${route.totalTollCost.toFixed(2)}`;
-  elements.metricHops.textContent = route.hops.length;
+  elements.metricTime.textContent = `${hrs > 0 ? `${hrs}h ` : ''}${mins}m`;
+  elements.metricStops.textContent = itinerary.totalAttractionsScheduled;
+  elements.metricDays.textContent = `${formParams.numDays} Days`;
 
   elements.routeStatusText.textContent = route.statusMessage;
-
-  if (route.reachable) {
-    elements.routeReachableBadge.textContent = 'Path Found (Dijkstra)';
-    elements.routeReachableBadge.className = 'badge';
-    elements.routeStatusAlert.className = 'alert-box success';
-  } else {
-    elements.routeReachableBadge.textContent = 'Unreachable Destination';
-    elements.routeReachableBadge.className = 'badge danger';
-    elements.routeStatusAlert.className = 'alert-box danger';
-  }
+  elements.routeReachableBadge.textContent = `${cityName} Tour`;
+  elements.routeReachableBadge.className = 'badge';
+  elements.routeStatusAlert.className = 'alert-box success';
 
   // Render hops
   elements.hopsContainer.innerHTML = '';
   if (route.hops.length === 0) {
-    elements.hopsContainer.innerHTML = `<div class="hop-item"><span>Intra-city journey or single vertex route.</span></div>`;
+    elements.hopsContainer.innerHTML = `<div class="hop-item"><span>Scenic walking & central transit route mapped for ${cityName}.</span></div>`;
   } else {
     route.hops.forEach((hop, i) => {
       const hopItem = document.createElement('div');
       hopItem.className = 'hop-item';
-      const hopH = Math.floor(hop.travelTimeMin / 60);
-      const hopM = hop.travelTimeMin % 60;
       hopItem.innerHTML = `
         <div class="hop-route">
-          <span>Stop ${i + 1}: ${hop.fromName}</span>
+          <span>Day ${hop.day || 1} &bull; ${hop.fromName}</span>
           <span class="hop-arrow">➔</span>
           <span>${hop.toName}</span>
         </div>
         <div class="hop-stats">
           <span>${hop.distanceKm.toFixed(1)} km</span>
-          <span>${hopH > 0 ? `${hopH}h ` : ''}${hopM}m</span>
+          <span>${hop.travelTimeMin} mins</span>
         </div>
       `;
       elements.hopsContainer.appendChild(hopItem);
     });
   }
 
-  /* 2. TSP Algorithmic Comparison */
-  const comp = itinerary.comparison;
-  elements.compGreedyDist.textContent = `${comp.greedyKm.toFixed(1)} km`;
-  elements.compExactDist.textContent = `${comp.exactKm.toFixed(1)} km`;
-  elements.compGreedyUs.textContent = `~12 μs`;
-  elements.compExactUs.textContent = `~35 μs`;
-
-  elements.compCommentary.textContent = comp.comment;
-  elements.compRecommendation.textContent = `Optimal Choice: ${comp.recommendedAlgorithm}`;
-
-  /* 3. Day-Wise Itinerary */
+  /* 2. Day-Wise Itinerary */
   elements.totalScheduledBadge.textContent = `${itinerary.totalAttractionsScheduled} Attractions Scheduled`;
   elements.daySchedulesList.innerHTML = '';
 
@@ -393,7 +389,7 @@ function renderTripPlanDashboard(plan) {
 
     let itemsHtml = '';
     if (day.items.length === 0) {
-      itemsHtml = '<div class="timeline-item"><div class="item-content">Rest & leisure day, or free exploration.</div></div>';
+      itemsHtml = '<div class="timeline-item"><div class="item-content">Rest & relaxation day, or free local shopping.</div></div>';
     } else {
       day.items.forEach(item => {
         itemsHtml += `
@@ -408,7 +404,7 @@ function renderTripPlanDashboard(plan) {
               </div>
               <div class="item-note">💡 ${item.timingNote}</div>
             </div>
-            <div class="item-cost">$${item.ticketCost.toFixed(2)}</div>
+            <div class="item-cost">${item.ticketCost > 0 ? formatINR(item.ticketCost) : 'Free Entry'}</div>
           </div>
         `;
       });
@@ -419,8 +415,8 @@ function renderTripPlanDashboard(plan) {
         <h4>Day ${day.dayNumber} Itinerary</h4>
         <div class="day-summary-badges">
           <span class="day-badge">Active: ${activeH}h ${activeM}m</span>
-          <span class="day-badge">Tickets: $${day.totalTicketCost.toFixed(2)}</span>
-          <span class="day-badge">${day.items.length} Stops</span>
+          <span class="day-badge">Tickets: ${formatINR(day.totalTicketCost)}</span>
+          <span class="day-badge">${day.items.length} Sights</span>
         </div>
       </div>
       <div class="day-items-timeline">${itemsHtml}</div>
@@ -429,10 +425,10 @@ function renderTripPlanDashboard(plan) {
     elements.daySchedulesList.appendChild(dayCard);
   });
 
-  /* 4. Budget Breakdown */
-  elements.budgetSpentLabel.textContent = `$${budget.totalExpense.toFixed(2)}`;
-  elements.budgetTotalLabel.textContent = `$${budget.userBudget.toFixed(2)}`;
-  elements.budgetRemainingVal.textContent = `$${budget.remainingBudget.toFixed(2)}`;
+  /* 3. Budget Breakdown in INR (₹) */
+  elements.budgetSpentLabel.textContent = formatINR(budget.totalExpense);
+  elements.budgetTotalLabel.textContent = formatINR(budget.userBudget);
+  elements.budgetRemainingVal.textContent = formatINR(budget.remainingBudget);
 
   const percentUsed = Math.min(100, Math.max(0, (budget.totalExpense / budget.userBudget) * 100));
   elements.budgetProgressFill.style.width = `${percentUsed}%`;
@@ -453,21 +449,21 @@ function renderTripPlanDashboard(plan) {
   }
   elements.budgetWarningText.textContent = budget.warningMessage;
 
-  elements.expHotelVal.textContent = `$${budget.hotelExpense.toFixed(2)}`;
+  elements.expHotelVal.textContent = formatINR(budget.hotelExpense);
   elements.expHotelDetail.textContent = `${budget.selectedHotel.name} (${budget.selectedHotel.tier})`;
-  elements.expFoodVal.textContent = `$${budget.foodExpense.toFixed(2)}`;
-  elements.expTransportVal.textContent = `$${budget.transportExpense.toFixed(2)}`;
-  elements.expActivityVal.textContent = `$${budget.activityExpense.toFixed(2)}`;
-  elements.expBufferVal.textContent = `$${budget.emergencyBuffer.toFixed(2)}`;
-  elements.expTotalVal.textContent = `$${budget.totalExpense.toFixed(2)}`;
+  elements.expFoodVal.textContent = formatINR(budget.foodExpense);
+  elements.expTransportVal.textContent = formatINR(budget.transportExpense);
+  elements.expActivityVal.textContent = formatINR(budget.activityExpense);
+  elements.expBufferVal.textContent = formatINR(budget.emergencyBuffer);
+  elements.expTotalVal.textContent = formatINR(budget.totalExpense);
 
-  /* 5. Hotels & Min-Heap Savings */
+  /* 4. Hotels & Cost Savers */
   renderHotelsList(budget.topRecommendations, budget.cheaperAlternatives);
 
   if (budget.potentialSavings > 0) {
     elements.savingsCallout.classList.remove('hidden');
     elements.savingsCalloutText.textContent =
-      `You could save up to $${budget.potentialSavings.toFixed(2)} on accommodation by choosing one of the Min-Heap cheaper alternatives below!`;
+      `You could save up to ${formatINR(budget.potentialSavings)} on lodging by choosing one of the value hotel alternatives below!`;
   } else {
     elements.savingsCallout.classList.add('hidden');
   }
@@ -502,7 +498,7 @@ function createHotelCard(hotel, isCheaperAlt) {
   card.innerHTML = `
     <div class="hotel-header">
       <span class="hotel-name">${hotel.name}</span>
-      <span class="hotel-price">$${hotel.pricePerNight.toFixed(2)}/nt</span>
+      <span class="hotel-price">${formatINR(hotel.pricePerNight)}/night</span>
     </div>
     <div class="hotel-meta">
       <span>⭐ ${hotel.rating.toFixed(1)} / 5.0</span>
@@ -512,24 +508,44 @@ function createHotelCard(hotel, isCheaperAlt) {
       <span>📍 ${hotel.distFromCenterKm ? `${hotel.distFromCenterKm.toFixed(1)} km to center` : 'Center'}</span>
     </div>
     <div class="hotel-amenities">
-      ${isCheaperAlt ? '<strong style="color: #059669;">✨ Min-Heap Budget Saver</strong>' : 'Comfort & service guaranteed'}
+      ${isCheaperAlt ? '<strong style="color: #10b981;">✨ Budget-Saver Option</strong>' : (hotel.amenities || 'Comfortable stay')}
     </div>
   `;
   return card;
 }
 
+// Client-side hotel sorting
+elements.hotelSortSelect.addEventListener('change', (e) => {
+  if (!state.currentPlan || !state.currentPlan.budget) return;
+  const mode = e.target.value;
+  const top = [...state.currentPlan.budget.topRecommendations];
+  const cheaper = [...state.currentPlan.budget.cheaperAlternatives];
+
+  const sortFn = (a, b) => {
+    if (mode === 'price_asc') return a.pricePerNight - b.pricePerNight;
+    if (mode === 'rating') return b.rating - a.rating;
+    if (mode === 'distance') return a.distFromCenterKm - b.distFromCenterKm;
+    return 0;
+  };
+
+  top.sort(sortFn);
+  cheaper.sort(sortFn);
+  renderHotelsList(top, cheaper);
+});
+
 /* -------------------------------------------------------------------------
-   SAVING TRIPS TO AVL TREE (C BACKEND)
+   SAVING TRIPS
    ------------------------------------------------------------------------- */
-elements.btnSaveTripAvl.addEventListener('click', async () => {
-  if (!state.currentPlan) return;
+if (elements.btnSaveTrip) {
+  elements.btnSaveTrip.addEventListener('click', async () => {
+    if (!state.currentPlan) return;
 
   const { formParams, budget, route } = state.currentPlan;
-  const srcLoc = state.locations.find(l => l.id === formParams.srcId);
   const destLoc = state.locations.find(l => l.id === formParams.destId);
+  const cityName = destLoc ? destLoc.name : (state.currentPlan.destinationCity || 'Vacation');
 
-  const defaultTripName = `${destLoc ? destLoc.name : 'Destination'} Expedition`;
-  const tripName = prompt('Enter a title for this trip record to store in the AVL Tree:', defaultTripName) || defaultTripName;
+  const defaultTripName = `${cityName} Expedition`;
+  const tripName = prompt('Enter a title for this trip itinerary:', defaultTripName) || defaultTripName;
 
   const today = new Date().toISOString().split('T')[0];
   const startDate = prompt('Enter planned start date (YYYY-MM-DD):', today) || today;
@@ -541,27 +557,26 @@ elements.btnSaveTripAvl.addEventListener('click', async () => {
       body: JSON.stringify({
         tripName,
         startDate,
-        sourceLocation: srcLoc ? srcLoc.name : 'Origin',
-        destLocation: destLoc ? destLoc.name : 'Destination',
+        destLocation: cityName,
         numDays: formParams.numDays,
         numTravellers: formParams.numTravellers,
         totalBudget: budget.userBudget,
         estimatedCost: budget.totalExpense,
         totalDistanceKm: route.totalDistanceKm,
         travelStyle: formParams.travelStyle,
-        notes: `Saved via C DSA AVL Engine. Shortest path: ${route.totalDistanceKm.toFixed(1)} km.`
+        notes: `Trip to ${cityName}. Planned transit: ${route.totalDistanceKm.toFixed(1)} km.`
       })
     });
 
     const data = await res.json();
     if (data.success) {
-      showToast(`Trip #${data.tripId} saved to AVL Tree successfully!`, 'success');
+      showToast(`Trip #${data.tripId} saved successfully!`, 'success');
       loadSavedTrips();
     } else {
       showToast(data.error || 'Failed to save trip.', 'error');
     }
   } catch (err) {
-    showToast('Failed to save trip to AVL Tree.', 'error');
+    showToast('Failed to save trip.', 'error');
   }
 });
 
@@ -570,7 +585,7 @@ elements.btnPrintPlan.addEventListener('click', () => {
 });
 
 /* -------------------------------------------------------------------------
-   SAVED TRIPS TABLE & AVL TREE OPERATIONS
+   SAVED TRIPS TABLE
    ------------------------------------------------------------------------- */
 async function loadSavedTrips() {
   try {
@@ -581,7 +596,7 @@ async function loadSavedTrips() {
       renderSavedTripsTable(state.savedTrips);
     }
   } catch (err) {
-    console.error('Error loading trips from AVL:', err);
+    console.error('Error loading trips:', err);
   }
 }
 
@@ -590,7 +605,7 @@ function renderSavedTripsTable(trips) {
   elements.savedCountNav.textContent = trips.length;
 
   if (trips.length === 0) {
-    elements.savedTripsTbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem;">No trips saved in the AVL Tree yet.</td></tr>`;
+    elements.savedTripsTbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem;">No trips saved yet. Configure and save a trip above!</td></tr>`;
     return;
   }
 
@@ -600,18 +615,18 @@ function renderSavedTripsTable(trips) {
       <td><strong>#${t.tripId}</strong></td>
       <td><strong>${t.tripName}</strong></td>
       <td><code>${t.startDate}</code></td>
-      <td>${t.sourceLocation} ➔ ${t.destLocation}</td>
-      <td>${t.numDays}d / ${t.numTravellers}p</td>
-      <td><strong style="color: #059669;">$${t.estimatedCost.toFixed(2)}</strong></td>
+      <td>📍 ${t.destLocation || t.sourceLocation}</td>
+      <td>${t.numDays}d / ${t.numTravellers} guests</td>
+      <td><strong style="color: #10b981;">${formatINR(t.estimatedCost)}</strong></td>
       <td><span class="badge info">${t.travelStyle}</span></td>
       <td>
-        <button class="btn-icon-del" data-id="${t.tripId}" title="Delete node from AVL Tree">🗑️ Delete</button>
+        <button class="btn-icon-del" data-id="${t.tripId}" title="Remove saved trip">🗑️ Delete</button>
       </td>
     `;
 
     row.querySelector('.btn-icon-del').addEventListener('click', async () => {
-      if (confirm(`Delete Trip #${t.tripId} ("${t.tripName}") from AVL Tree?`)) {
-        await deleteTripFromAvl(t.tripId);
+      if (confirm(`Delete trip #${t.tripId} ("${t.tripName}")?`)) {
+        await deleteTrip(t.tripId);
       }
     });
 
@@ -619,12 +634,12 @@ function renderSavedTripsTable(trips) {
   });
 }
 
-async function deleteTripFromAvl(tripId) {
+async function deleteTrip(tripId) {
   try {
     const res = await fetch(`/api/trips/${tripId}`, { method: 'DELETE' });
     const data = await res.json();
     if (data.success) {
-      showToast(`Trip #${tripId} deleted from AVL Tree and rebalanced.`, 'info');
+      showToast(`Trip #${tripId} removed.`, 'info');
       loadSavedTrips();
     } else {
       showToast(data.message || 'Delete failed', 'error');
@@ -643,8 +658,7 @@ elements.inputTripFilter.addEventListener('input', (e) => {
   const filtered = state.savedTrips.filter(t =>
     t.tripName.toLowerCase().includes(term) ||
     t.startDate.includes(term) ||
-    t.sourceLocation.toLowerCase().includes(term) ||
-    t.destLocation.toLowerCase().includes(term) ||
+    (t.destLocation && t.destLocation.toLowerCase().includes(term)) ||
     String(t.tripId).includes(term)
   );
   renderSavedTripsTable(filtered);
@@ -652,11 +666,11 @@ elements.inputTripFilter.addEventListener('input', (e) => {
 
 elements.btnRefreshTrips.addEventListener('click', () => {
   loadSavedTrips();
-  showToast('Reloaded trips from AVL Tree.', 'info');
+  showToast('Reloaded saved trips.', 'info');
 });
 
 /* -------------------------------------------------------------------------
-   HASH TABLE SEARCH (MODULE 4)
+   ATTRACTION SEARCH
    ------------------------------------------------------------------------- */
 async function executeSearch() {
   const query = elements.inputSearchQuery.value.trim();
@@ -681,7 +695,7 @@ function renderSearchResults(results) {
 
   if (!results || results.length === 0) {
     elements.searchResultsContainer.innerHTML =
-      '<div class="placeholder-text">No attractions found matching the Hash Table query. Try a different term or category.</div>';
+      '<div class="placeholder-text">No attractions found matching your search. Try another city or keyword.</div>';
     return;
   }
 
@@ -701,14 +715,13 @@ function renderSearchResults(results) {
           <span>⭐ ${a.rating.toFixed(1)}</span> &bull; 
           <span>📍 ${a.locationName || 'City'}</span>
         </div>
-        <div class="attr-fee">${a.ticketCost > 0 ? `$${a.ticketCost.toFixed(2)}` : 'Free Entry'}</div>
+        <div class="attr-fee">${a.ticketCost > 0 ? formatINR(a.ticketCost) : 'Free Entry'}</div>
       </div>
     `;
     elements.searchResultsContainer.appendChild(card);
   });
 }
 
-// Live search input with debounce
 elements.inputSearchQuery.addEventListener('input', () => {
   clearTimeout(state.searchDebounceTimer);
   state.searchDebounceTimer = setTimeout(executeSearch, 250);
@@ -716,7 +729,6 @@ elements.inputSearchQuery.addEventListener('input', () => {
 
 elements.btnSearchTrigger.addEventListener('click', executeSearch);
 
-// Category filter pills
 elements.categoryPills.addEventListener('click', (e) => {
   const pill = e.target.closest('.cat-pill');
   if (!pill) return;
@@ -727,37 +739,5 @@ elements.categoryPills.addEventListener('click', (e) => {
   executeSearch();
 });
 
-/* -------------------------------------------------------------------------
-   UNIT TEST RUNNER MODAL
-   ------------------------------------------------------------------------- */
-elements.btnRunTests.addEventListener('click', async () => {
-  elements.testModal.classList.remove('hidden');
-  elements.testOutputConsole.textContent = 'Invoking C executable with --api run_tests...\n';
-
-  try {
-    const res = await fetch('/api/tests');
-    const text = await res.text();
-    elements.testOutputConsole.textContent = text;
-  } catch (err) {
-    elements.testOutputConsole.textContent = `Error executing tests: ${err.message}`;
-  }
-});
-
-elements.modalCloseBtn.addEventListener('click', () => {
-  elements.testModal.classList.add('hidden');
-});
-
-elements.modalOkBtn.addEventListener('click', () => {
-  elements.testModal.classList.add('hidden');
-});
-
-// Close modal on click outside
-elements.testModal.addEventListener('click', (e) => {
-  if (e.target === elements.testModal) {
-    elements.testModal.classList.add('hidden');
-  }
-});
-
 /* Initialize application on load */
 window.addEventListener('DOMContentLoaded', initAppData);
-

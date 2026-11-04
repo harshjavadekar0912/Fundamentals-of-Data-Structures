@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TripPlanner - Intelligent Travel Itinerary & Budget Engine</title>
+  <title>TripPlanner - Intelligent Travel Itinerary & Budget Planner</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,30 +16,29 @@
     <div class="nav-container">
       <div class="nav-brand">
         <div class="brand-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
           </svg>
         </div>
         <div class="brand-text">
           <span class="brand-title">TripPlanner</span>
-          <span class="brand-subtitle">C DSA Engine</span>
+          <span class="brand-subtitle">Smart Itinerary & Budget Engine</span>
         </div>
       </div>
 
       <nav class="nav-links">
-        <a href="#planner-section" class="nav-link active">Plan Journey</a>
+        <a href="#planner-section" class="nav-link active">Plan Trip</a>
         <a href="#search-section" class="nav-link">Search Attractions</a>
         <a href="#trips-section" class="nav-link">Saved Trips (<span id="saved-count-nav">0</span>)</a>
-        <a href="#dsa-section" class="nav-link">DSA Architecture</a>
       </nav>
 
       <div class="nav-actions">
-        <button id="btn-run-tests" class="btn btn-outline" title="Run backend unit tests in C">
-          <span class="icon">⚡</span> Run C Tests
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle dark/light theme" title="Toggle theme">
+          <span class="theme-icon light-icon">☀️</span>
+          <span class="theme-icon dark-icon">🌙</span>
+          <span class="theme-label" id="theme-label-text">Dark Mode</span>
         </button>
-        <span class="engine-badge online">
-          <span class="status-dot"></span> C Core Online
-        </span>
       </div>
     </div>
   </header>
@@ -51,33 +50,32 @@
     <section class="hero-section">
       <div class="hero-content">
         <div class="hero-tag">
-          <span class="tag-pulse"></span> Complete Trip Planning Powered by Classic Data Structures & Algorithms
+          <span class="tag-pulse"></span> Intelligent Itinerary Planning & Budget Optimization
         </div>
-        <h1 class="hero-heading">Craft Perfect Journeys with <span class="gradient-text">Algorithmic Precision</span></h1>
+        <h1 class="hero-heading">Craft Perfect Journeys with <span class="gradient-text">Smart Planning</span></h1>
         <p class="hero-subtext">
-          Dijkstra shortest paths on road graphs, optimal TSP itinerary scheduling, Min-Heap priority queues,
-          djb2 Hash Table indexing, and AVL Self-Balancing Tree trip persistence.
+          Select your destination city, customize your travel style and budget in Indian Rupees, and get an optimal day-by-day sightseeing schedule with verified opening hours and handpicked hotels.
         </p>
 
         <div class="stats-ribbon">
           <div class="stat-card">
-            <div class="stat-number" id="stat-locations">13</div>
-            <div class="stat-label">Graph Vertices</div>
+            <div class="stat-number" id="stat-locations">18</div>
+            <div class="stat-label">Destinations</div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-card">
-            <div class="stat-number" id="stat-roads">28</div>
-            <div class="stat-label">Adjacency Edges</div>
+            <div class="stat-number" id="stat-attractions">115+</div>
+            <div class="stat-label">Sightseeing Attractions</div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-card">
-            <div class="stat-number" id="stat-attractions">37</div>
-            <div class="stat-label">Indexed Attractions</div>
+            <div class="stat-number" id="stat-hotels">100+</div>
+            <div class="stat-label">Curated Stays</div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-card">
-            <div class="stat-number" id="stat-hotels">36</div>
-            <div class="stat-label">Min-Heap Hotels</div>
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Optimal Routes</div>
           </div>
         </div>
       </div>
@@ -86,46 +84,34 @@
     <!-- Interactive Trip Planner Wizard Section -->
     <section id="planner-section" class="content-section">
       <div class="section-header">
-        <div class="badge-pill">Step 1</div>
-        <h2>Configure Your Expedition</h2>
-        <p>Set origin, destination, travel parameters, and select algorithmic optimization mode.</p>
+        <div class="badge-pill">Trip Configuration</div>
+        <h2>Plan Your City Vacation</h2>
+        <p>Choose the city you wish to visit, adjust dates and budget, and let our engine generate an ideal itinerary.</p>
       </div>
 
       <div class="planner-layout">
         <!-- Configuration Form Card -->
         <div class="card form-card">
           <form id="trip-form">
-            <!-- Route Selector -->
-            <div class="form-row two-col">
-              <div class="form-group">
-                <label for="select-src">
-                  <span class="label-icon">📍</span> Origin City
-                </label>
-                <select id="select-src" class="form-control" required>
-                  <option value="" disabled selected>Loading destinations...</option>
-                </select>
-                <span class="field-hint">Starting vertex in the road graph</span>
-              </div>
-
-              <div class="form-group">
-                <label for="select-dest">
-                  <span class="label-icon">🏁</span> Destination City
-                </label>
-                <select id="select-dest" class="form-control" required>
-                  <option value="" disabled selected>Loading destinations...</option>
-                </select>
-                <span class="field-hint">Target vertex for Dijkstra pathfinding</span>
-              </div>
+            <!-- Single City Selection -->
+            <div class="form-group">
+              <label for="select-dest">
+                <span class="label-icon">📍</span> Destination City
+              </label>
+              <select id="select-dest" class="form-control" required>
+                <option value="" disabled selected>Loading destinations...</option>
+              </select>
+              <span class="field-hint">Select the destination city you want to explore (e.g. Pune, Jaipur, Udaipur, Mumbai)</span>
             </div>
 
-            <!-- Trip Duration & Travelers -->
+            <!-- Trip Duration, Travelers & Budget in INR -->
             <div class="form-row three-col">
               <div class="form-group">
                 <label for="input-days">
                   <span class="label-icon">📅</span> Duration (Days)
                 </label>
                 <input type="number" id="input-days" class="form-control" min="1" max="14" value="3" required>
-                <span class="field-hint">Max daily active: 9 hrs</span>
+                <span class="field-hint">Balanced daily pacing</span>
               </div>
 
               <div class="form-group">
@@ -133,15 +119,15 @@
                   <span class="label-icon">👥</span> Travelers
                 </label>
                 <input type="number" id="input-travellers" class="form-control" min="1" max="12" value="2" required>
-                <span class="field-hint">Calculates room & food</span>
+                <span class="field-hint">Number of guests</span>
               </div>
 
               <div class="form-group">
                 <label for="input-budget">
-                  <span class="label-icon">💵</span> Total Budget ($)
+                  <span class="label-icon">₹</span> Total Budget (INR)
                 </label>
-                <input type="number" id="input-budget" class="form-control" min="100" max="50000" step="50" value="1000" required>
-                <span class="field-hint">Used for budget health checks</span>
+                <input type="number" id="input-budget" class="form-control" min="3000" max="1000000" step="500" value="25000" required>
+                <span class="field-hint">All expenses in Rupees (₹)</span>
               </div>
             </div>
 
@@ -163,7 +149,7 @@
                   <div class="tier-box">
                     <span class="tier-icon">🚗</span>
                     <span class="tier-name">Standard</span>
-                    <span class="tier-desc">3-star hotels, cabs, restaurants</span>
+                    <span class="tier-desc">Comfort hotels, cabs, popular eateries</span>
                   </div>
                 </label>
 
@@ -172,37 +158,7 @@
                   <div class="tier-box">
                     <span class="tier-icon">👑</span>
                     <span class="tier-name">Luxury</span>
-                    <span class="tier-desc">5-star heritage, private chauffeur, fine dining</span>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <!-- Algorithm Mode Selector -->
-            <div class="form-group">
-              <label><span class="label-icon">⚙️</span> Itinerary Optimization Algorithm</label>
-              <div class="algorithm-selector">
-                <label class="algo-option">
-                  <input type="radio" name="algoMode" value="compare" checked>
-                  <div class="algo-box">
-                    <div class="algo-title">Compare Both (Greedy vs Exact TSP) <span class="badge-recommended">Recommended</span></div>
-                    <div class="algo-sub">Computes both algorithms simultaneously in C and benchmarks distance, time, and optimality.</div>
-                  </div>
-                </label>
-
-                <label class="algo-option">
-                  <input type="radio" name="algoMode" value="exact">
-                  <div class="algo-box">
-                    <div class="algo-title">Exact TSP (Recursion & Backtracking)</div>
-                    <div class="algo-sub">Explores permutations with branch-and-bound pruning to guarantee the absolute global optimum (O(N!)).</div>
-                  </div>
-                </label>
-
-                <label class="algo-option">
-                  <input type="radio" name="algoMode" value="greedy">
-                  <div class="algo-box">
-                    <div class="algo-title">Greedy Nearest Neighbor (Heuristic)</div>
-                    <div class="algo-sub">Instantly steps to the closest unvisited attraction in O(N²) time. Highly efficient.</div>
+                    <span class="tier-desc">5-star heritage stays, chauffeur, fine dining</span>
                   </div>
                 </label>
               </div>
@@ -226,7 +182,7 @@
             <!-- Submit Button -->
             <button type="submit" id="btn-generate-plan" class="btn btn-primary btn-large">
               <span class="btn-icon">🚀</span>
-              <span class="btn-text">Compute Complete Trip Plan in C</span>
+              <span class="btn-text">Generate Complete Trip Plan</span>
               <div class="loader" id="plan-loader"></div>
             </button>
           </form>
@@ -234,41 +190,41 @@
 
         <!-- Right Quick Info Card -->
         <div class="card info-card">
-          <h3>C DSA Algorithms Employed</h3>
-          <ul class="dsa-feature-list">
+          <h3>Why Plan with TripPlanner?</h3>
+          <ul class="feature-list">
             <li>
-              <div class="dsa-icon">🛣️</div>
+              <div class="feature-icon">🗺️</div>
               <div>
-                <strong>Dijkstra Shortest Path</strong>
-                <p>Min-Heap priority queue computes optimal routes in <code>O((V + E) log V)</code>. Gracefully detects unreachable destinations.</p>
+                <strong>Smart Sightseeing Circuit</strong>
+                <p>Calculates the optimal visiting order across attractions to minimize driving time and maximize your vacation.</p>
               </div>
             </li>
             <li>
-              <div class="dsa-icon">🔄</div>
+              <div class="feature-icon">⏰</div>
               <div>
-                <strong>Traveling Salesperson Problem (TSP)</strong>
-                <p>Recursion & backtracking with branch-and-bound pruning for global optimum, compared alongside Greedy Nearest Neighbor <code>O(N²)</code>.</p>
+                <strong>Opening Hours & Time Protection</strong>
+                <p>Respects opening and closing gates for every attraction, ensuring you never arrive at a closed monument.</p>
               </div>
             </li>
             <li>
-              <div class="dsa-icon">⏳</div>
+              <div class="feature-icon">💰</div>
               <div>
-                <strong>Opening Hours Constraint Scheduler</strong>
-                <p>Simulates visit durations, opening/closing gates, and enforces balanced daily 9-hour active bounds.</p>
+                <strong>Transparent Indian Rupee Budgeting</strong>
+                <p>Comprehensive breakdown of lodging, dining, transit, activity fees, and emergency reserve in ₹ (INR).</p>
               </div>
             </li>
             <li>
-              <div class="dsa-icon">🏨</div>
+              <div class="feature-icon">🏨</div>
               <div>
-                <strong>Min-Heap Hotel Optimizer</strong>
-                <p>Priority queue extracts cheapest stays in <code>O(K log N)</code>, paired with in-place QuickSort for rating & distance.</p>
+                <strong>Smart Accommodation Matching</strong>
+                <p>Recommends top-rated hotels and surfaces budget-saver alternatives that can save thousands of Rupees.</p>
               </div>
             </li>
             <li>
-              <div class="dsa-icon">🌲</div>
+              <div class="feature-icon">💾</div>
               <div>
-                <strong>AVL Self-Balancing Tree</strong>
-                <p>Stores trips with 4 rotation cases (LL, RR, LR, RL) for guaranteed <code>O(log N)</code> search, update, and sorted display.</p>
+                <strong>Save & Manage Itineraries</strong>
+                <p>Keep track of all your planned vacations chronologically and access them anytime.</p>
               </div>
             </li>
           </ul>
@@ -279,206 +235,144 @@
     <!-- Trip Results Dashboard Section -->
     <section id="results-section" class="content-section results-container hidden">
       <div class="section-header">
-        <div class="badge-pill success">Computed by C Engine</div>
-        <h2 id="plan-title-heading">Comprehensive Trip Blueprint</h2>
-        <p id="plan-sub-heading">All modules integrated: Route, TSP Itinerary, Opening Constraints, Itemized Budget & Hotels.</p>
+        <div class="badge-pill success">Trip Blueprint Ready</div>
+        <h2 id="plan-title-heading">Your Optimized Vacation Blueprint</h2>
+        <p id="plan-sub-heading">Complete city tour itinerary, route directions, itemized budget, and recommended stays.</p>
       </div>
 
       <!-- Action Bar -->
       <div class="plan-action-bar">
-        <button id="btn-save-trip-avl" class="btn btn-success">
-          <span class="icon">💾</span> Save Trip to AVL Tree
+        <button id="btn-save-trip" class="btn btn-success">
+          <span class="icon">💾</span> Save Trip Itinerary
         </button>
         <button id="btn-print-plan" class="btn btn-outline">
           <span class="icon">🖨️</span> Print / Export Plan
         </button>
       </div>
 
-      <!-- Module 1: Route & Distance Overview -->
+      <!-- Route Overview Card -->
       <div class="result-block card">
         <div class="block-header">
           <div class="block-title">
-            <span class="block-icon">🗺️</span>
-            <h3>Route & Navigation (Dijkstra Shortest Path)</h3>
+            <span class="block-icon">🧭</span>
+            <h3>Sightseeing Circuit & Transit</h3>
           </div>
-          <span class="badge" id="route-reachable-badge">Direct Route Found</span>
+          <span class="badge" id="route-reachable-badge">Route Planned</span>
         </div>
 
         <div class="route-metrics-grid">
           <div class="metric-card">
             <div class="metric-value" id="metric-dist">0 km</div>
-            <div class="metric-label">Total Distance</div>
+            <div class="metric-label">Total Sightseeing Travel</div>
           </div>
           <div class="metric-card">
             <div class="metric-value" id="metric-time">0 hrs 0 mins</div>
             <div class="metric-label">Estimated Transit Time</div>
           </div>
           <div class="metric-card">
-            <div class="metric-value" id="metric-tolls">$0.00</div>
-            <div class="metric-label">Highway Tolls</div>
+            <div class="metric-value" id="metric-stops">0</div>
+            <div class="metric-label">Planned Stops</div>
           </div>
           <div class="metric-card">
-            <div class="metric-value" id="metric-hops">0</div>
-            <div class="metric-label">Route Interchanges</div>
+            <div class="metric-value" id="metric-days">3 Days</div>
+            <div class="metric-label">Trip Duration</div>
           </div>
         </div>
 
         <!-- Route Status Message -->
         <div id="route-status-alert" class="alert-box info">
           <span class="alert-icon">ℹ️</span>
-          <span id="route-status-text">Route calculated successfully.</span>
+          <span id="route-status-text">Sightseeing route mapped successfully.</span>
         </div>
 
-        <!-- Step by Step Hops Timeline -->
+        <!-- Sightseeing Interchanges Timeline -->
         <div class="hops-timeline" id="hops-container">
           <!-- Filled dynamically -->
         </div>
       </div>
 
-      <!-- Module 2: TSP Algorithmic Comparison -->
-      <div class="result-block card">
-        <div class="block-header">
-          <div class="block-title">
-            <span class="block-icon">⚖️</span>
-            <h3>Itinerary Optimization: Greedy vs Exact TSP Benchmark</h3>
-          </div>
-          <span class="badge info" id="algo-benchmark-badge">C Benchmark</span>
-        </div>
-
-        <div class="comparison-grid">
-          <div class="comp-card" id="comp-greedy-card">
-            <div class="comp-card-header">
-              <span class="comp-icon">⚡</span>
-              <h4>Greedy Nearest-Neighbor</h4>
-              <span class="complexity-tag">O(N²)</span>
-            </div>
-            <div class="comp-stat">
-              <span class="label">Total Distance:</span>
-              <span class="value" id="comp-greedy-dist">0 km</span>
-            </div>
-            <div class="comp-stat">
-              <span class="label">Transit Time:</span>
-              <span class="value" id="comp-greedy-time">0 mins</span>
-            </div>
-            <div class="comp-stat">
-              <span class="label">C Execution Time:</span>
-              <span class="value font-mono" id="comp-greedy-us">0 μs</span>
-            </div>
-          </div>
-
-          <div class="comp-card highlight" id="comp-exact-card">
-            <div class="comp-card-header">
-              <span class="comp-icon">🎯</span>
-              <h4>Exact TSP (Backtracking)</h4>
-              <span class="complexity-tag">O(N!) Pruned</span>
-            </div>
-            <div class="comp-stat">
-              <span class="label">Total Distance:</span>
-              <span class="value" id="comp-exact-dist">0 km</span>
-            </div>
-            <div class="comp-stat">
-              <span class="label">Transit Time:</span>
-              <span class="value" id="comp-exact-time">0 mins</span>
-            </div>
-            <div class="comp-stat">
-              <span class="label">C Execution Time:</span>
-              <span class="value font-mono" id="comp-exact-us">0 μs</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Comparison Commentary Alert -->
-        <div class="alert-box success" id="comp-comment-alert">
-          <span class="alert-icon">💡</span>
-          <div class="alert-body">
-            <strong id="comp-commentary">Benchmark commentary loading...</strong>
-            <div id="comp-recommendation" class="sub-comment">Recommendation</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Module 3: Day-Wise Itinerary Schedule -->
+      <!-- Day-Wise Itinerary Schedule -->
       <div class="result-block card">
         <div class="block-header">
           <div class="block-title">
             <span class="block-icon">📆</span>
-            <h3>Day-Wise Timetable & Opening Hours Verification</h3>
+            <h3>Day-by-Day Sightseeing Itinerary</h3>
           </div>
           <span class="badge" id="total-scheduled-badge">0 Attractions Scheduled</span>
         </div>
 
-        <!-- Days Accordion/Grid -->
+        <!-- Days List -->
         <div class="day-schedules-container" id="day-schedules-list">
           <!-- Populated dynamically -->
         </div>
       </div>
 
-      <!-- Module 4: Itemized Budget Breakdown -->
+      <!-- Itemized Budget Breakdown (INR ₹) -->
       <div class="result-block card">
         <div class="block-header">
           <div class="block-title">
-            <span class="block-icon">💰</span>
-            <h3>Budget Breakdown & Financial Health</h3>
+            <span class="block-icon">₹</span>
+            <h3>Trip Budget Breakdown & Financial Summary</h3>
           </div>
           <span class="badge" id="budget-status-pill">Within Budget</span>
         </div>
 
-        <!-- Budget Gauge & Health Banner -->
+        <!-- Budget Gauge -->
         <div class="budget-meter-container">
           <div class="budget-bar-labels">
-            <span>Spent: <strong id="budget-spent-label">$0.00</strong></span>
-            <span>Allocated: <strong id="budget-total-label">$0.00</strong></span>
+            <span>Estimated Spend: <strong id="budget-spent-label">₹0</strong></span>
+            <span>Allocated Budget: <strong id="budget-total-label">₹0</strong></span>
           </div>
           <div class="budget-progress-bar">
             <div class="progress-fill" id="budget-progress-fill" style="width: 50%;"></div>
           </div>
           <div class="budget-remaining-text">
-            Remaining Buffer: <span id="budget-remaining-val" class="font-bold">$0.00</span>
+            Remaining Buffer: <span id="budget-remaining-val" class="font-bold">₹0</span>
           </div>
         </div>
 
-        <!-- Warning / Status Alert -->
+        <!-- Status Alert -->
         <div class="alert-box" id="budget-warning-box">
           <span class="alert-icon" id="budget-warning-icon">🔔</span>
-          <span id="budget-warning-text">Budget analysis</span>
+          <span id="budget-warning-text">Budget analysis loading...</span>
         </div>
 
-        <!-- Itemized Category Grid -->
+        <!-- Itemized Category Grid in INR -->
         <div class="expense-cards-grid">
           <div class="expense-card">
             <div class="exp-icon">🏨</div>
             <div class="exp-info">
-              <span class="exp-title">Lodging & Hotel</span>
+              <span class="exp-title">Hotel Accommodation</span>
               <span class="exp-detail" id="exp-hotel-detail">Selected stay</span>
             </div>
-            <div class="exp-amount" id="exp-hotel-val">$0.00</div>
+            <div class="exp-amount" id="exp-hotel-val">₹0</div>
           </div>
 
           <div class="expense-card">
             <div class="exp-icon">🍽️</div>
             <div class="exp-info">
               <span class="exp-title">Food & Dining</span>
-              <span class="exp-detail" id="exp-food-detail">Daily allowance</span>
+              <span class="exp-detail" id="exp-food-detail">Daily meals & refreshments</span>
             </div>
-            <div class="exp-amount" id="exp-food-val">$0.00</div>
+            <div class="exp-amount" id="exp-food-val">₹0</div>
           </div>
 
           <div class="expense-card">
             <div class="exp-icon">🚕</div>
             <div class="exp-info">
-              <span class="exp-title">Transit & Fuel</span>
-              <span class="exp-detail" id="exp-transport-detail">Route transit + local</span>
+              <span class="exp-title">Local Transit</span>
+              <span class="exp-detail" id="exp-transport-detail">Cabs & city travel</span>
             </div>
-            <div class="exp-amount" id="exp-transport-val">$0.00</div>
+            <div class="exp-amount" id="exp-transport-val">₹0</div>
           </div>
 
           <div class="expense-card">
             <div class="exp-icon">🎟️</div>
             <div class="exp-info">
-              <span class="exp-title">Activities & Entry</span>
-              <span class="exp-detail" id="exp-activity-detail">Attraction passes</span>
+              <span class="exp-title">Activities & Entry Tickets</span>
+              <span class="exp-detail" id="exp-activity-detail">Monument & park passes</span>
             </div>
-            <div class="exp-amount" id="exp-activity-val">$0.00</div>
+            <div class="exp-amount" id="exp-activity-val">₹0</div>
           </div>
 
           <div class="expense-card">
@@ -487,7 +381,7 @@
               <span class="exp-title">Emergency Buffer</span>
               <span class="exp-detail">7% Contingency reserve</span>
             </div>
-            <div class="exp-amount" id="exp-buffer-val">$0.00</div>
+            <div class="exp-amount" id="exp-buffer-val">₹0</div>
           </div>
 
           <div class="expense-card total-card">
@@ -496,49 +390,49 @@
               <span class="exp-title">Grand Total Estimated</span>
               <span class="exp-detail">All expenses combined</span>
             </div>
-            <div class="exp-amount grand-total" id="exp-total-val">$0.00</div>
+            <div class="exp-amount grand-total" id="exp-total-val">₹0</div>
           </div>
         </div>
       </div>
 
-      <!-- Module 5: Hotel Recommendations & Min-Heap Alternatives -->
+      <!-- Hotel Recommendations & Cost Savers -->
       <div class="result-block card">
         <div class="block-header">
           <div class="block-title">
             <span class="block-icon">🏨</span>
-            <h3>Hotel Recommendations & Min-Heap Cost Savers</h3>
+            <h3>Hotel Recommendations & Money-Saving Alternatives</h3>
           </div>
           <div class="hotel-sort-controls">
             <label for="hotel-sort-select">Sort By:</label>
             <select id="hotel-sort-select" class="form-control-sm">
               <option value="rating">Rating (Highest First)</option>
-              <option value="price_asc">Price (Lowest - Min Heap)</option>
-              <option value="distance">Distance to Center</option>
+              <option value="price_asc">Price (Lowest First)</option>
+              <option value="distance">Proximity to City Center</option>
             </select>
           </div>
         </div>
 
-        <!-- Cheaper Alternatives Savings Alert (if available) -->
+        <!-- Savings Opportunity Callout -->
         <div id="savings-callout" class="alert-box warning hidden">
           <span class="alert-icon">💸</span>
           <div class="alert-body">
-            <strong>Cost Saving Opportunity Available:</strong>
-            <span id="savings-callout-text">You could save $X by switching to a Min-Heap cheaper alternative!</span>
+            <strong>Cost-Saving Opportunity:</strong>
+            <span id="savings-callout-text">You could save money by switching to an economical alternative below!</span>
           </div>
         </div>
 
         <div class="hotels-container-grid">
           <!-- Top Recommended Hotels -->
           <div class="hotel-column">
-            <h4 class="column-title">🌟 Top Recommended Options</h4>
+            <h4 class="column-title">🌟 Top Recommended Stays</h4>
             <div class="hotel-cards-list" id="top-hotels-list">
               <!-- Dynamically populated -->
             </div>
           </div>
 
-          <!-- Min Heap Cheaper Alternatives -->
+          <!-- Cheaper Alternatives -->
           <div class="hotel-column">
-            <h4 class="column-title">🏷️ Cheaper Alternatives (Min-Heap)</h4>
+            <h4 class="column-title">🏷️ Value Alternatives</h4>
             <div class="hotel-cards-list" id="cheaper-hotels-list">
               <!-- Dynamically populated -->
             </div>
@@ -547,21 +441,21 @@
       </div>
     </section>
 
-    <!-- Search Attractions Section (Hash Table) -->
+    <!-- Search Attractions Section -->
     <section id="search-section" class="content-section">
       <div class="section-header">
-        <div class="badge-pill">Module 4</div>
-        <h2>Search Attractions via Hash Table</h2>
-        <p>Instant O(1) average lookup using djb2 separate chaining polynomial hashing.</p>
+        <div class="badge-pill">Explore & Discover</div>
+        <h2>Search Tourist Attractions</h2>
+        <p>Find famous landmarks, palaces, temples, nature parks, and food streets across India.</p>
       </div>
 
       <div class="card search-card">
         <div class="search-input-group">
           <div class="search-field">
             <span class="search-icon">🔍</span>
-            <input type="text" id="input-search-query" class="search-input" placeholder="Search by name, landmark, or city (e.g. Fort, Palace, Lake, Taj, Temple)...">
+            <input type="text" id="input-search-query" class="search-input" placeholder="Search by attraction name or city (e.g. Shaniwar Wada, Sinhagad, Fort, Lake, Temple)...">
           </div>
-          <button id="btn-search-trigger" class="btn btn-primary">Search Hash Table</button>
+          <button id="btn-search-trigger" class="btn btn-primary">Search</button>
         </div>
 
         <!-- Category Filter Pills -->
@@ -572,37 +466,36 @@
           <button class="cat-pill" data-cat="Nature">Nature</button>
           <button class="cat-pill" data-cat="Adventure">Adventure</button>
           <button class="cat-pill" data-cat="Religious">Religious</button>
-          <button class="cat-pill" data-cat="Food">Food</button>
+          <button class="cat-pill" data-cat="Food">Food & Street Trail</button>
         </div>
 
-        <!-- Search Results Count & Container -->
         <div class="search-results-meta">
           <span>Results: <strong id="search-count-label">0</strong> attractions found</span>
-          <span class="hash-tag">Hash Table: Separate Chaining (Table Size: 127)</span>
+          <span class="meta-badge">Instant Lookup</span>
         </div>
 
         <div class="search-results-grid" id="search-results-container">
-          <div class="placeholder-text">Type a keyword or click a category above to query the Hash Table.</div>
+          <div class="placeholder-text">Type a keyword or select a category above to find sights.</div>
         </div>
       </div>
     </section>
 
-    <!-- Saved Trips Section (AVL Tree) -->
+    <!-- Saved Trips Section -->
     <section id="trips-section" class="content-section">
       <div class="section-header">
-        <div class="badge-pill">Module 5</div>
-        <h2>Saved Trips Manager (AVL Tree)</h2>
-        <p>Self-Balancing Binary Search Tree maintaining O(log N) operations and in-order chronological ordering.</p>
+        <div class="badge-pill">Your Journeys</div>
+        <h2>Saved Trips Manager</h2>
+        <p>Review and manage all your saved vacation plans.</p>
       </div>
 
       <div class="card trips-card">
         <div class="trips-toolbar">
           <div class="trips-filter">
-            <span class="filter-icon">📅</span>
-            <input type="text" id="input-trip-filter" class="form-control" placeholder="Filter by date (YYYY-MM-DD) or keyword...">
+            <span class="filter-icon">🔍</span>
+            <input type="text" id="input-trip-filter" class="form-control" placeholder="Search saved trips by name or date...">
           </div>
           <button id="btn-refresh-trips" class="btn btn-outline">
-            <span class="icon">🔄</span> Reload from AVL Tree
+            <span class="icon">🔄</span> Refresh Trips
           </button>
         </div>
 
@@ -610,117 +503,25 @@
           <table class="trips-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>Trip ID</th>
                 <th>Trip Name</th>
-                <th>Start Date</th>
-                <th>Route</th>
-                <th>Days / Travelers</th>
-                <th>Total Cost</th>
-                <th>Style</th>
+                <th>Departure Date</th>
+                <th>Destination</th>
+                <th>Duration / Guests</th>
+                <th>Estimated Cost</th>
+                <th>Travel Style</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="saved-trips-tbody">
-              <!-- Dynamically populated from AVL tree in-order traversal -->
+              <!-- Dynamically populated -->
             </tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- DSA Architecture & Technical Specifications Section -->
-    <section id="dsa-section" class="content-section">
-      <div class="section-header">
-        <div class="badge-pill">DSA Technical Reference</div>
-        <h2>Data Structures & Algorithmic Complexity</h2>
-        <p>Complete theoretical and empirical specifications implemented in the C core backend.</p>
-      </div>
-
-      <div class="dsa-specs-grid">
-        <div class="spec-card card">
-          <div class="spec-header">
-            <span class="spec-num">01</span>
-            <h4>Graph & Min-Heap (Dijkstra)</h4>
-          </div>
-          <p class="spec-desc">Adjacency list graph with Min-Heap priority queue for shortest travel distance and duration calculation.</p>
-          <div class="spec-complexity">
-            <div><span>Time Complexity:</span> <code>O((V + E) log V)</code></div>
-            <div><span>Space Complexity:</span> <code>O(V + E)</code></div>
-          </div>
-          <div class="spec-file">File: <code>backend/location_route.c</code></div>
-        </div>
-
-        <div class="spec-card card">
-          <div class="spec-header">
-            <span class="spec-num">02</span>
-            <h4>TSP: Greedy vs Backtracking</h4>
-          </div>
-          <p class="spec-desc">Greedy nearest-neighbor approximation compared against exact branch-and-bound recursion for optimal attraction sequence.</p>
-          <div class="spec-complexity">
-            <div><span>Greedy Time:</span> <code>O(N²)</code></div>
-            <div><span>Exact Time:</span> <code>O(N!) pruned</code></div>
-          </div>
-          <div class="spec-file">File: <code>backend/itinerary.c</code></div>
-        </div>
-
-        <div class="spec-card card">
-          <div class="spec-header">
-            <span class="spec-num">03</span>
-            <h4>Min-Heap & QuickSort</h4>
-          </div>
-          <p class="spec-desc">Priority queue extracting lowest accommodation prices with in-place QuickSort partitioning by rating, price, and distance.</p>
-          <div class="spec-complexity">
-            <div><span>Heap Extract:</span> <code>O(K log N)</code></div>
-            <div><span>Sort Time:</span> <code>O(N log N)</code></div>
-          </div>
-          <div class="spec-file">File: <code>backend/budget.c</code></div>
-        </div>
-
-        <div class="spec-card card">
-          <div class="spec-header">
-            <span class="spec-num">04</span>
-            <h4>Hash Table with Chaining</h4>
-          </div>
-          <p class="spec-desc">Separate chaining hash table utilizing the djb2 polynomial rolling hash algorithm for rapid keyword and category searches.</p>
-          <div class="spec-complexity">
-            <div><span>Average Search:</span> <code>O(1)</code></div>
-            <div><span>Table Size:</span> <code>127 (Prime)</code></div>
-          </div>
-          <div class="spec-file">File: <code>backend/search.c</code></div>
-        </div>
-
-        <div class="spec-card card">
-          <div class="spec-header">
-            <span class="spec-num">05</span>
-            <h4>AVL Self-Balancing Tree</h4>
-          </div>
-          <p class="spec-desc">Self-balancing BST maintaining height balance factor within [-1, +1] using 4 rotation types (LL, RR, LR, RL) for persistent trips.</p>
-          <div class="spec-complexity">
-            <div><span>Search / Insert:</span> <code>O(log N)</code></div>
-            <div><span>In-Order Traversal:</span> <code>O(N)</code></div>
-          </div>
-          <div class="spec-file">File: <code>backend/trip_management.c</code></div>
-        </div>
-      </div>
-    </section>
-
   </main>
-
-  <!-- Unit Test Modal -->
-  <div id="test-modal" class="modal-backdrop hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>C Backend Automated Unit Tests</h3>
-        <button id="modal-close-btn" class="modal-close">&times;</button>
-      </div>
-      <div class="modal-body">
-        <pre id="test-output-console" class="test-console">Executing test suite in C...</pre>
-      </div>
-      <div class="modal-footer">
-        <button id="modal-ok-btn" class="btn btn-primary">Close</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
@@ -729,10 +530,10 @@
   <footer class="app-footer">
     <div class="footer-container">
       <div>
-        <strong>TripPlanner Application</strong> &bull; Complete DSA Implementation in C &bull; Node.js Express REST API &bull; Modern Web UI
+        <strong>TripPlanner Application</strong> &bull; Complete Travel Itinerary & Budget Optimization
       </div>
       <div class="footer-sub">
-        Algorithms: Dijkstra, Min-Heap, Exact TSP, Greedy Nearest-Neighbor, Hash Table (djb2), AVL Tree Rotations.
+        Explore Pune, Mumbai, Jaipur, Udaipur, Delhi, Agra, Goa, and more with smart route planning and transparent Indian Rupee budgeting.
       </div>
     </div>
   </footer>
@@ -740,4 +541,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-

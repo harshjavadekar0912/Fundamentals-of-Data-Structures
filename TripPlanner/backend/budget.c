@@ -1,18 +1,9 @@
 /**
  * budget.c - Expense breakdown, Hotel Min-Heap priority queue,
- * QuickSort implementations, and budget alert system.
+ * QuickSort implementations, and budget alert system in Indian Rupees (INR ₹).
  * 
  * Part of Trip Planner Web Application
  * Core backend implemented in C (DSA)
- * 
- * ALGORITHM SPECIFICATIONS:
- * 1. Min Heap for Cheapest Hotels:
- *    - Insert: O(log N)
- *    - Extract-Min: O(log N)
- *    - Extracting Top K cheapest: O(K log N)
- * 2. In-Place QuickSort:
- *    - Average Time Complexity: O(N log N)
- *    - Auxiliary Space Complexity: O(log N) recursive stack
  */
 
 #include "budget.h"
@@ -180,7 +171,7 @@ void sortHotelsByDistance(Hotel* arr, int n, int ascending) {
 }
 
 /* -------------------------------------------------------------------------
-   BUDGET & RECOMMENDATION CALCULATION
+   BUDGET & RECOMMENDATION CALCULATION (in Indian Rupees INR ₹)
    ------------------------------------------------------------------------- */
 
 BudgetBreakdown calculateBudget(const MasterData* data,
@@ -204,7 +195,7 @@ BudgetBreakdown calculateBudget(const MasterData* data,
     int rooms = (int)ceil((double)b.numTravellers / 2.0);
     if (rooms < 1) rooms = 1;
 
-    /* Gather candidate hotels for the destination */
+    /* Gather candidate hotels for destination */
     Hotel candidates[MAX_HOTELS];
     int candidateCount = 0;
 
@@ -213,23 +204,21 @@ BudgetBreakdown calculateBudget(const MasterData* data,
             candidates[candidateCount++] = data->hotels[i];
         }
     }
-    /* Fallback if no hotels in destination */
     if (candidateCount == 0) {
         for (int i = 0; i < data->numHotels && i < 6; i++) {
             candidates[candidateCount++] = data->hotels[i];
         }
     }
 
-    /* 1. Use Hotel Min-Heap to extract cheapest hotels */
+    /* 1. Min-Heap for cheapest hotels */
     HotelMinHeap* minHeap = createHotelMinHeap(candidateCount + 2);
     for (int i = 0; i < candidateCount; i++) {
         insertHotelMinHeap(minHeap, candidates[i].id, candidates[i].pricePerNight);
     }
 
-    /* Extract top cheapest hotels */
     Hotel cheapestHotels[MAX_HOTELS];
     int cheapestCount = 0;
-    while (minHeap->size > 0 && cheapestCount < 5) {
+    while (minHeap->size > 0 && cheapestCount < 6) {
         HotelHeapNode node = extractMinHotel(minHeap);
         const Hotel* h = findHotelById(data, node.hotelId);
         if (h) {
@@ -238,14 +227,13 @@ BudgetBreakdown calculateBudget(const MasterData* data,
     }
     freeHotelMinHeap(minHeap);
 
-    /* 2. Select default or requested hotel */
+    /* 2. Selected hotel */
     const Hotel* chosenHotel = NULL;
     if (selectedHotelId > 0) {
         chosenHotel = findHotelById(data, selectedHotelId);
     }
 
     if (!chosenHotel) {
-        /* Auto-select hotel matching travelStyle */
         for (int i = 0; i < candidateCount; i++) {
             if (strcasecmp(candidates[i].tier, b.travelStyle) == 0) {
                 chosenHotel = &candidates[i];
@@ -262,65 +250,64 @@ BudgetBreakdown calculateBudget(const MasterData* data,
         b.selectedHotelId = chosenHotel->id;
         b.hotelExpense = chosenHotel->pricePerNight * nights * rooms;
     } else {
-        b.hotelExpense = 50.0 * nights * rooms;
+        b.hotelExpense = 3500.0 * nights * rooms;
     }
 
-    /* 3. Determine Food Expense */
-    double dailyFoodRate = 45.0; /* Standard */
+    /* 3. Food Expense in INR */
+    double dailyFoodRate = 1200.0; /* Standard: ₹1,200/day */
     if (strcasecmp(b.travelStyle, "Budget") == 0) {
-        dailyFoodRate = 20.0;
+        dailyFoodRate = 450.0;     /* Budget: ₹450/day */
     } else if (strcasecmp(b.travelStyle, "Luxury") == 0) {
-        dailyFoodRate = 110.0;
+        dailyFoodRate = 3000.0;    /* Luxury: ₹3,000/day */
     }
     b.foodExpense = dailyFoodRate * b.numTravellers * b.numDays;
 
-    /* 4. Determine Transport Expense */
-    double ratePerKm = 0.35;    /* Standard car / taxi */
-    double localDailyTransit = 25.0;
+    /* 4. Transport Expense in INR */
+    double ratePerKm = 22.0;       /* Standard cab: ₹22/km */
+    double localDailyTransit = 900.0;
     if (strcasecmp(b.travelStyle, "Budget") == 0) {
-        ratePerKm = 0.15;       /* Bus / Train */
-        localDailyTransit = 12.0;
+        ratePerKm = 12.0;          /* Budget transit: ₹12/km */
+        localDailyTransit = 350.0;
     } else if (strcasecmp(b.travelStyle, "Luxury") == 0) {
-        ratePerKm = 0.75;       /* Premium chauffeur */
-        localDailyTransit = 65.0;
+        ratePerKm = 45.0;          /* Luxury chauffeur: ₹45/km */
+        localDailyTransit = 2500.0;
     }
     b.transportExpense = (ratePerKm * routeDistanceKm) + (localDailyTransit * b.numDays);
 
-    /* 5. Activity / Sightseeing Expense */
+    /* 5. Activities & Tickets in INR */
     b.activityExpense = activityTicketTotal * b.numTravellers;
 
     /* 6. Emergency Buffer (7%) */
     double baseSum = b.hotelExpense + b.foodExpense + b.transportExpense + b.activityExpense;
     b.emergencyBuffer = baseSum * 0.07;
 
-    /* 7. Total and Remaining */
+    /* 7. Total & Remaining in INR */
     b.totalExpense = baseSum + b.emergencyBuffer;
     b.remainingBudget = b.userBudget - b.totalExpense;
 
-    /* 8. Budget Status & Warnings */
+    /* 8. Budget Status & Messages */
     if (b.remainingBudget < 0.0) {
         strncpy(b.status, "Over Budget", 31);
         snprintf(b.warningMessage, sizeof(b.warningMessage),
-                 "Warning: Total estimated cost ($%.2f) exceeds your budget ($%.2f) by $%.2f. We recommend choosing a cheaper hotel or reducing luxury amenities.",
+                 "Notice: Estimated expenditure (₹%.0f) exceeds your budget (₹%.0f) by ₹%.0f. Consider choosing an economical hotel option or adjusting travel style.",
                  b.totalExpense, b.userBudget, fabs(b.remainingBudget));
     } else if (b.remainingBudget < (b.userBudget * 0.15)) {
         strncpy(b.status, "Near Limit", 31);
         snprintf(b.warningMessage, sizeof(b.warningMessage),
-                 "Caution: You are close to your budget limit ($%.2f remaining, %.1f%% buffer). Avoid unexpected luxury expenses.",
+                 "Caution: You are close to your budget limit (₹%.0f remaining, %.1f%% buffer). Reserve funds for unexpected personal expenses.",
                  b.remainingBudget, (b.remainingBudget / b.userBudget) * 100.0);
     } else {
         strncpy(b.status, "Within Budget", 31);
         snprintf(b.warningMessage, sizeof(b.warningMessage),
-                 "Healthy Budget: $%.2f remaining (%.1f%% reserve). You have sufficient funds for your planned itinerary.",
+                 "Healthy Budget: ₹%.0f remaining (%.1f%% buffer). Your planned trip is comfortably within budget.",
                  b.remainingBudget, (b.remainingBudget / b.userBudget) * 100.0);
     }
 
     /* 9. Top 3 Hotel Recommendations */
-    /* Sort candidate hotels by rating (descending) to find top rated */
     Hotel ratingSorted[MAX_HOTELS];
     int sortCount = candidateCount > MAX_HOTELS ? MAX_HOTELS : candidateCount;
     for (int i = 0; i < sortCount; i++) ratingSorted[i] = candidates[i];
-    sortHotelsByRating(ratingSorted, sortCount, 0); /* descending rating */
+    sortHotelsByRating(ratingSorted, sortCount, 0);
 
     b.topRecommendedCount = 0;
     for (int i = 0; i < sortCount && b.topRecommendedCount < 3; i++) {
@@ -344,4 +331,3 @@ BudgetBreakdown calculateBudget(const MasterData* data,
 
     return b;
 }
-

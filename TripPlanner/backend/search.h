@@ -10,8 +10,8 @@
 
 #include "data.h"
 
-#define HASH_TABLE_SIZE 127
-#define MAX_SEARCH_RESULTS 40
+#define HASH_TABLE_SIZE 389
+#define MAX_SEARCH_RESULTS 80
 
 /* --- Hash Table Node (Separate Chaining for Collision Resolution) --- */
 typedef struct HashNode {

@@ -13,10 +13,10 @@
 #include <string.h>
 #include <math.h>
 
-#define MAX_LOCATIONS 30
-#define MAX_ROADS 100
-#define MAX_ATTRACTIONS 100
-#define MAX_HOTELS 60
+#define MAX_LOCATIONS 40
+#define MAX_ROADS 160
+#define MAX_ATTRACTIONS 200
+#define MAX_HOTELS 160
 #define INF_DIST 99999999.0
 #define MAX_NAME_LEN 64
 #define MAX_DESC_LEN 256
@@ -36,7 +36,7 @@ typedef struct EdgeNode {
     int destinationId;
     double distanceKm;
     int travelTimeMin;
-    double tollCost;
+    double tollCost;         /* in INR (₹) */
     struct EdgeNode* next;
 } EdgeNode;
 
@@ -53,8 +53,8 @@ typedef struct {
     int locationId;
     char name[MAX_NAME_LEN];
     char category[32];       /* Historical, Nature, Cultural, Adventure, Religious, Food */
-    double ticketCost;       /* in USD */
-    int avgVisitTimeMin;     /* e.g., 90, 120 */
+    double ticketCost;       /* in INR (₹) */
+    int avgVisitTimeMin;     /* e.g., 60, 90, 120 */
     int openTime;            /* HHMM format, e.g., 900 for 09:00 */
     int closeTime;           /* HHMM format, e.g., 1800 for 18:00 */
     double rating;           /* 0.0 - 5.0 */
@@ -67,7 +67,7 @@ typedef struct {
     int locationId;
     char name[MAX_NAME_LEN];
     char tier[16];           /* Budget, Standard, Luxury */
-    double pricePerNight;    /* in USD */
+    double pricePerNight;    /* in INR (₹) */
     double rating;           /* 0.0 - 5.0 */
     double distFromCenterKm;
     char amenities[128];
@@ -90,4 +90,3 @@ const Attraction* findAttractionById(const MasterData* data, int id);
 const Hotel* findHotelById(const MasterData* data, int id);
 
 #endif /* DATA_H */
-

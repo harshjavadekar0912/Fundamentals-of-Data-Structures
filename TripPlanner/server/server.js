@@ -1,6 +1,7 @@
 /**
  * server.js - Node.js Express API Server for Trip Planner.
  * Communicates with the C DSA executable via child processes and JSON streams.
+ * Configured for single-city planning, Exact TSP optimization, and Indian Rupee (INR ₹) budgets.
  */
 
 const express = require('express');
@@ -54,7 +55,7 @@ function runCBackend(args) {
                 resolve(json);
             } catch (parseErr) {
                 console.error('Failed to parse C JSON stdout:\n', stdout);
-                reject(new Error(`Invalid JSON received from C backend: ${parseErr.message}`));
+                reject(new Error(`Invalid JSON received from backend: ${parseErr.message}`));
             }
         });
     });
@@ -68,7 +69,7 @@ function runCBackend(args) {
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'online',
-        system: 'Trip Planner C DSA Web Engine',
+        system: 'Trip Planner Web Engine',
         timestamp: new Date().toISOString()
     });
 });
@@ -103,7 +104,7 @@ app.get('/api/hotels', async (req, res) => {
     }
 });
 
-// 4. Dijkstra Shortest Path Route
+// 4. Shortest Path Route
 app.post('/api/route', async (req, res) => {
     try {
         const { srcId, destId } = req.body;
@@ -117,12 +118,12 @@ app.post('/api/route', async (req, res) => {
     }
 });
 
-// 5. Itinerary Optimization (Greedy vs Exact TSP + Day Schedule)
+// 5. Itinerary Optimization (Exact TSP + Day Schedule)
 app.post('/api/itinerary', async (req, res) => {
     try {
-        const { numDays = 3, preferExact = 1, attrIds = [] } = req.body;
-        const csv = attrIds.length > 0 ? attrIds.join(',') : '';
-        const data = await runCBackend(['optimize_itinerary', String(numDays), String(preferExact ? 1 : 0), csv]);
+        const { numDays = 3, attrIds = [] } = req.body;
+        const csv = attrIds.length > 0 ? attrIds.join(',') : '_NONE_';
+        const data = await runCBackend(['optimize_itinerary', String(numDays), csv]);
         res.json(data);
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -133,14 +134,14 @@ app.post('/api/itinerary', async (req, res) => {
 app.post('/api/budget', async (req, res) => {
     try {
         const {
-            userBudget = 1000,
+            userBudget = 25000,
             numDays = 3,
             numTravellers = 2,
             travelStyle = 'Standard',
-            destLocationId = 1,
+            destLocationId = 13,
             selectedHotelId = -1,
-            routeDistKm = 233,
-            activityCost = 45
+            routeDistKm = 35,
+            activityCost = 500
         } = req.body;
 
         const data = await runCBackend([
@@ -160,7 +161,7 @@ app.post('/api/budget', async (req, res) => {
     }
 });
 
-// 7. Hash Table Attraction Search
+// 7. Attraction Search
 app.get('/api/search', async (req, res) => {
     try {
         const query = (req.query.query || '').trim() || '_EMPTY_';
@@ -172,18 +173,16 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
-// 8. Full Combined Trip Plan (Route + Itinerary + Budget + Hotels)
+// 8. Full Combined Trip Plan (Single City Focus, Exact TSP, INR)
 app.post('/api/plan-trip', async (req, res) => {
     try {
         const {
-            srcId = 0,
-            destId = 1,
+            destId = 13,
             numDays = 3,
             numTravellers = 2,
-            userBudget = 1000,
+            userBudget = 25000,
             travelStyle = 'Standard',
             selectedHotelId = -1,
-            preferExact = 1,
             attrIds = []
         } = req.body;
 
@@ -191,14 +190,12 @@ app.post('/api/plan-trip', async (req, res) => {
 
         const data = await runCBackend([
             'full_trip_plan',
-            String(srcId),
             String(destId),
             String(numDays),
             String(numTravellers),
             String(userBudget),
             String(travelStyle),
             String(selectedHotelId),
-            String(preferExact ? 1 : 0),
             attrCsv
         ]);
         res.json(data);
@@ -207,7 +204,7 @@ app.post('/api/plan-trip', async (req, res) => {
     }
 });
 
-// 9. Saved Trips CRUD (AVL Tree)
+// 9. Saved Trips CRUD
 app.get('/api/trips', async (req, res) => {
     try {
         const data = await runCBackend(['trip_list']);
@@ -220,15 +217,14 @@ app.get('/api/trips', async (req, res) => {
 app.post('/api/trips', async (req, res) => {
     try {
         const {
-            tripName = 'My Adventure',
+            tripName = 'City Expedition',
             startDate = '2026-11-25',
-            sourceLocation = 'Delhi',
-            destLocation = 'Agra',
+            destLocation = 'Pune',
             numDays = 3,
             numTravellers = 2,
-            totalBudget = 1000,
-            estimatedCost = 650,
-            totalDistanceKm = 233,
+            totalBudget = 25000,
+            estimatedCost = 18500,
+            totalDistanceKm = 40,
             travelStyle = 'Standard',
             notes = 'Created from Trip Planner Web App'
         } = req.body;
@@ -237,7 +233,6 @@ app.post('/api/trips', async (req, res) => {
             'trip_add',
             tripName,
             startDate,
-            sourceLocation,
             destLocation,
             String(numDays),
             String(numTravellers),
@@ -269,7 +264,6 @@ app.put('/api/trips/:id', async (req, res) => {
         const {
             tripName,
             startDate,
-            sourceLocation,
             destLocation,
             numDays,
             numTravellers,
@@ -285,8 +279,7 @@ app.put('/api/trips/:id', async (req, res) => {
             String(id),
             tripName || '',
             startDate || '',
-            sourceLocation || '',
-            destLocation || '',
+            destLocation || 'Pune',
             String(numDays || 0),
             String(numTravellers || 0),
             String(totalBudget || 0),
@@ -311,7 +304,7 @@ app.delete('/api/trips/:id', async (req, res) => {
     }
 });
 
-// Run C Unit Tests endpoint
+// Automated tests endpoint
 app.get('/api/tests', (req, res) => {
     const binPath = getCExecutablePath();
     const rootCwd = path.join(__dirname, '..');
@@ -329,11 +322,9 @@ app.get('*', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`=======================================================`);
-    console.log(` Trip Planner Web Application Server`);
-    console.log(` Powered by C DSA Engine`);
+    console.log(` Trip Planner Web Application`);
     console.log(` URL: http://localhost:${PORT}`);
     console.log(`=======================================================`);
 });
-
