@@ -155,24 +155,28 @@ async function initAppData() {
     ]);
 
     if (locRes.success) {
-      state.locations = locRes.locations;
-      populateLocationDropdown();
+      state.locations = locRes.locations || [];
       document.getElementById('stat-locations').textContent = state.locations.length;
     }
 
     if (attrRes.success) {
-      state.attractions = attrRes.attractions;
+      state.attractions = attrRes.attractions || [];
       document.getElementById('stat-attractions').textContent = state.attractions.length + '+';
     }
 
     if (hotelRes.success) {
-      state.hotels = hotelRes.hotels;
+      state.hotels = hotelRes.hotels || [];
       document.getElementById('stat-hotels').textContent = state.hotels.length + '+';
     }
 
     if (tripsRes.success) {
-      state.savedTrips = tripsRes.trips;
+      state.savedTrips = tripsRes.trips || [];
       renderSavedTripsTable(state.savedTrips);
+    }
+
+    // Populate dropdown and attraction chips only after both locations and attractions are loaded
+    if (state.locations.length > 0) {
+      populateLocationDropdown();
     }
 
     executeSearch();
@@ -239,12 +243,15 @@ function updateAttractionChipsForDestination(destId) {
     chip.addEventListener('click', (e) => {
       e.preventDefault();
       const id = a.id;
+      const cb = chip.querySelector('input');
       if (state.selectedAttrIds.has(id)) {
         state.selectedAttrIds.delete(id);
         chip.classList.remove('active');
+        if (cb) cb.checked = false;
       } else {
         state.selectedAttrIds.add(id);
         chip.classList.add('active');
+        if (cb) cb.checked = true;
       }
     });
 
@@ -262,6 +269,8 @@ elements.btnSelectAllAttrs.addEventListener('click', () => {
     const id = parseInt(chip.dataset.id, 10);
     state.selectedAttrIds.add(id);
     chip.classList.add('active');
+    const cb = chip.querySelector('input');
+    if (cb) cb.checked = true;
   });
 });
 
@@ -269,6 +278,8 @@ elements.btnClearAttrs.addEventListener('click', () => {
   const chips = elements.attractionChipsContainer.querySelectorAll('.chip-label');
   chips.forEach(chip => {
     chip.classList.remove('active');
+    const cb = chip.querySelector('input');
+    if (cb) cb.checked = false;
   });
   state.selectedAttrIds.clear();
 });
@@ -578,7 +589,8 @@ if (elements.btnSaveTrip) {
   } catch (err) {
     showToast('Failed to save trip.', 'error');
   }
-});
+  });
+}
 
 elements.btnPrintPlan.addEventListener('click', () => {
   window.print();
@@ -727,6 +739,13 @@ elements.inputSearchQuery.addEventListener('input', () => {
   state.searchDebounceTimer = setTimeout(executeSearch, 250);
 });
 
+elements.inputSearchQuery.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    executeSearch();
+  }
+});
+
 elements.btnSearchTrigger.addEventListener('click', executeSearch);
 
 elements.categoryPills.addEventListener('click', (e) => {
@@ -737,6 +756,14 @@ elements.categoryPills.addEventListener('click', (e) => {
   pill.classList.add('active');
   state.activeSearchCategory = pill.dataset.cat;
   executeSearch();
+});
+
+/* Navigation link active state switching */
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+  });
 });
 
 /* Initialize application on load */

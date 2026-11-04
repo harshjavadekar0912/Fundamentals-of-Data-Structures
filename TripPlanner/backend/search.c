@@ -104,7 +104,7 @@ void buildAttractionSearchIndex(HashTable* ht, const MasterData* data) {
         /* 1. Index full attraction name */
         insertHashEntry(ht, a->name, a->id);
 
-        /* 2. Index individual word tokens */
+        /* 2. Index individual word tokens from name */
         char buffer[MAX_NAME_LEN];
         strncpy(buffer, a->name, sizeof(buffer) - 1);
         buffer[sizeof(buffer) - 1] = '\0';
@@ -120,10 +120,23 @@ void buildAttractionSearchIndex(HashTable* ht, const MasterData* data) {
         /* 3. Index Category */
         insertHashEntry(ht, a->category, a->id);
 
-        /* 4. Index City/Location Name */
+        /* 4. Index City/Location Name and State */
         const Location* loc = findLocationById(data, a->locationId);
         if (loc) {
             insertHashEntry(ht, loc->name, a->id);
+            insertHashEntry(ht, loc->state, a->id);
+        }
+
+        /* 5. Index descriptive keywords */
+        char descBuf[MAX_DESC_LEN];
+        strncpy(descBuf, a->description, sizeof(descBuf) - 1);
+        descBuf[sizeof(descBuf) - 1] = '\0';
+        char* descToken = strtok(descBuf, " ,.-'()&");
+        while (descToken != NULL) {
+            if (strlen(descToken) >= 4) {
+                insertHashEntry(ht, descToken, a->id);
+            }
+            descToken = strtok(NULL, " ,.-'()&");
         }
     }
 }
@@ -151,17 +164,17 @@ int searchAttractions(const HashTable* ht,
     int hasQuery = (query && strlen(query) > 0);
     int hasCategory = (categoryFilter && strlen(categoryFilter) > 0 && strcasecmp(categoryFilter, "All") != 0);
 
-    char normQuery[64];
+    char normQuery[128];
     if (hasQuery) {
         strToLower(query, normQuery, sizeof(normQuery));
     }
 
-    /* CASE 1: Query provided -> use Hash Table bucket lookup */
+    /* CASE 1: Query provided -> Multi-stage Hash Table and substring lookup */
     if (hasQuery) {
+        /* Stage 1: Exact Hash Table lookup for full query phrase */
         unsigned int bucket = hashFunction(normQuery);
         HashNode* curr = ht->buckets[bucket];
 
-        /* Direct exact token match in Hash Table */
         while (curr && matchCount < maxResults) {
             if (strstr(curr->key, normQuery) != NULL) {
                 const Attraction* a = findAttractionById(data, curr->attractionId);
@@ -176,13 +189,47 @@ int searchAttractions(const HashTable* ht,
             curr = curr->next;
         }
 
-        /* Also check word substring scan over all attractions if matches are few */
+        /* Stage 2: Tokenize multi-word query and lookup individual tokens via Hash Table */
+        char queryCopy[128];
+        strncpy(queryCopy, normQuery, sizeof(queryCopy) - 1);
+        queryCopy[sizeof(queryCopy) - 1] = '\0';
+
+        char* qTok = strtok(queryCopy, " ,.-'()&");
+        while (qTok != NULL && matchCount < maxResults) {
+            if (strlen(qTok) >= 2) {
+                unsigned int tBucket = hashFunction(qTok);
+                HashNode* tNode = ht->buckets[tBucket];
+                while (tNode && matchCount < maxResults) {
+                    if (strcasecmp(tNode->key, qTok) == 0 || strstr(tNode->key, qTok) != NULL) {
+                        const Attraction* a = findAttractionById(data, tNode->attractionId);
+                        if (a && (!hasCategory || strcasecmp(a->category, categoryFilter) == 0)) {
+                            if (!isAlreadyInResults(resultIds, matchCount, a->id)) {
+                                resultIds[matchCount++] = a->id;
+                            }
+                        }
+                    }
+                    tNode = tNode->next;
+                }
+            }
+            qTok = strtok(NULL, " ,.-'()&");
+        }
+
+        /* Stage 3: Substring search across Attraction Name, City Name, and Description */
         for (int i = 0; i < data->numAttractions && matchCount < maxResults; i++) {
             const Attraction* a = &data->attractions[i];
-            char lowerName[MAX_NAME_LEN];
-            strToLower(a->name, lowerName, sizeof(lowerName));
+            const Location* loc = findLocationById(data, a->locationId);
 
-            if (strstr(lowerName, normQuery) != NULL) {
+            char lowerName[MAX_NAME_LEN];
+            char lowerCity[MAX_NAME_LEN];
+            char lowerDesc[MAX_DESC_LEN];
+
+            strToLower(a->name, lowerName, sizeof(lowerName));
+            strToLower(loc ? loc->name : "", lowerCity, sizeof(lowerCity));
+            strToLower(a->description, lowerDesc, sizeof(lowerDesc));
+
+            if (strstr(lowerName, normQuery) != NULL ||
+                strstr(lowerCity, normQuery) != NULL ||
+                strstr(lowerDesc, normQuery) != NULL) {
                 if (!hasCategory || strcasecmp(a->category, categoryFilter) == 0) {
                     if (!isAlreadyInResults(resultIds, matchCount, a->id)) {
                         resultIds[matchCount++] = a->id;
@@ -204,6 +251,16 @@ int searchAttractions(const HashTable* ht,
                 }
             }
             curr = curr->next;
+        }
+
+        /* Fallback linear scan if hash bucket missed any */
+        for (int i = 0; i < data->numAttractions && matchCount < maxResults; i++) {
+            const Attraction* a = &data->attractions[i];
+            if (strcasecmp(a->category, categoryFilter) == 0) {
+                if (!isAlreadyInResults(resultIds, matchCount, a->id)) {
+                    resultIds[matchCount++] = a->id;
+                }
+            }
         }
     }
     /* CASE 3: Neither query nor category -> return all attractions up to maxResults */
