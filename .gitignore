@@ -1,0 +1,9 @@
+# Node modules
+node_modules/
+package-lock.json
+
+# C build artifacts
+*.o
+*.obj
+TripPlanner/backend/trip_planner.exe
+

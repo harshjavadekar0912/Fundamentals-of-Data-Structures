@@ -1,0 +1,5 @@
+1001|Royal Rajasthan Heritage|2026-11-15|20261115|Delhi|Jaipur|4|2|1200.00|845.50|280.00|Standard|Visit Amber Palace, Hawa Mahal and City Palace
+1002|Taj Mahal Express Getaway|2026-11-28|20261128|Delhi|Agra|2|2|600.00|410.00|233.00|Budget|Sunrise visit to Taj Mahal and sunset at Mehtab Bagh
+1003|Lakes & Palaces of Udaipur|2026-12-10|20261210|Jaipur|Udaipur|5|3|1800.00|1350.00|395.00|Luxury|Stay at heritage haveli, romantic boat cruise on Lake Pichola
+1004|Himalayan Mountain Adventure|2026-12-24|20261224|Delhi|Manali|6|4|2200.00|1620.00|591.00|Standard|Solang Valley snow sports and scenic mountain drive
+

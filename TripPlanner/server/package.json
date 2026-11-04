@@ -1,0 +1,14 @@
+{
+  "name": "trip-planner-server",
+  "version": "1.0.0",
+  "description": "Express API server bridging Node.js and C DSA engine for Trip Planner",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
+
