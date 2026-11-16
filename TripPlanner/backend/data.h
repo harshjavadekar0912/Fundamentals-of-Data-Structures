@@ -15,7 +15,7 @@
 
 #define MAX_LOCATIONS 40
 #define MAX_ROADS 160
-#define MAX_ATTRACTIONS 200
+#define MAX_ATTRACTIONS 300
 #define MAX_HOTELS 160
 #define INF_DIST 99999999.0
 #define MAX_NAME_LEN 64
@@ -59,6 +59,8 @@ typedef struct {
     int closeTime;           /* HHMM format, e.g., 1800 for 18:00 */
     double rating;           /* 0.0 - 5.0 */
     char description[MAX_DESC_LEN];
+    double latitude;
+    double longitude;
 } Attraction;
 
 /* --- Hotel Structure --- */

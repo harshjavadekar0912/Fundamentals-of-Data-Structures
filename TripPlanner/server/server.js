@@ -166,7 +166,8 @@ app.get('/api/search', async (req, res) => {
     try {
         const query = (req.query.query || '').trim() || '_EMPTY_';
         const category = (req.query.category || '').trim() || '_EMPTY_';
-        const data = await runCBackend(['search_attractions', query, category]);
+        const city = (req.query.city || '').trim() || '_EMPTY_';
+        const data = await runCBackend(['search_attractions', query, category, city]);
         res.json(data);
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });

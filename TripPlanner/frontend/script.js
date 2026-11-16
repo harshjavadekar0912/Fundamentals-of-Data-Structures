@@ -1,7 +1,8 @@
 /**
  * script.js - Frontend application controller for TripPlanner.
  * Includes Dark/Light theme switching, single-city planning,
- * Indian Rupee (INR ₹) formatting, and Exact TSP itinerary rendering.
+ * Indian Rupee (INR ₹) formatting, Exact TSP itinerary rendering,
+ * Leaflet.js interactive attractions map, and detailed saved trips view.
  */
 
 // Application State
@@ -13,7 +14,10 @@ const state = {
   currentPlan: null,
   selectedAttrIds: new Set(),
   activeSearchCategory: 'All',
-  searchDebounceTimer: null
+  activeSearchCity: 'All',
+  searchDebounceTimer: null,
+  map: null,
+  mapMarkers: []
 };
 
 // Helper: Format amount in Indian Rupees (INR)
@@ -88,18 +92,29 @@ const elements = {
   hotelSortSelect: document.getElementById('hotel-sort-select'),
 
   // Search
+  selectSearchCity: document.getElementById('select-search-city'),
   inputSearchQuery: document.getElementById('input-search-query'),
   btnSearchTrigger: document.getElementById('btn-search-trigger'),
   categoryPills: document.getElementById('category-pills'),
   searchCountLabel: document.getElementById('search-count-label'),
   searchResultsContainer: document.getElementById('search-results-container'),
+  attractionsMap: document.getElementById('attractions-map'),
+  mapCityLabel: document.getElementById('map-city-label'),
 
   // Saved Trips
   savedTripsTbody: document.getElementById('saved-trips-tbody'),
   savedCountNav: document.getElementById('saved-count-nav'),
   inputTripFilter: document.getElementById('input-trip-filter'),
   btnRefreshTrips: document.getElementById('btn-refresh-trips'),
-  toastContainer: document.getElementById('toast-container')
+  toastContainer: document.getElementById('toast-container'),
+
+  // Modal
+  savedTripModal: document.getElementById('saved-trip-modal'),
+  modalTripName: document.getElementById('modal-trip-name'),
+  modalTripMeta: document.getElementById('modal-trip-meta'),
+  modalTripBody: document.getElementById('modal-trip-body'),
+  btnCloseTripModal: document.getElementById('btn-close-trip-modal'),
+  btnModalBack: document.getElementById('btn-modal-back')
 };
 
 /* -------------------------------------------------------------------------
@@ -145,6 +160,7 @@ function showToast(message, type = 'info') {
    ------------------------------------------------------------------------- */
 async function initAppData() {
   initTheme();
+  initLeafletMap();
 
   try {
     const [locRes, attrRes, hotelRes, tripsRes] = await Promise.all([
@@ -156,17 +172,20 @@ async function initAppData() {
 
     if (locRes.success) {
       state.locations = locRes.locations || [];
-      document.getElementById('stat-locations').textContent = state.locations.length;
+      const statLoc = document.getElementById('stat-locations');
+      if (statLoc) statLoc.textContent = state.locations.length;
     }
 
     if (attrRes.success) {
       state.attractions = attrRes.attractions || [];
-      document.getElementById('stat-attractions').textContent = state.attractions.length + '+';
+      const statAttr = document.getElementById('stat-attractions');
+      if (statAttr) statAttr.textContent = state.attractions.length + '+';
     }
 
     if (hotelRes.success) {
       state.hotels = hotelRes.hotels || [];
-      document.getElementById('stat-hotels').textContent = state.hotels.length + '+';
+      const statHotel = document.getElementById('stat-hotels');
+      if (statHotel) statHotel.textContent = state.hotels.length + '+';
     }
 
     if (tripsRes.success) {
@@ -174,11 +193,13 @@ async function initAppData() {
       renderSavedTripsTable(state.savedTrips);
     }
 
-    // Populate dropdown and attraction chips only after both locations and attractions are loaded
+    // Populate dropdowns after data is loaded
     if (state.locations.length > 0) {
       populateLocationDropdown();
+      populateSearchCityDropdown();
     }
 
+    // Initial search
     executeSearch();
 
   } catch (err) {
@@ -213,6 +234,104 @@ function populateLocationDropdown() {
     elements.selectDest.value = String(sortedLocations[0].id);
     updateAttractionChipsForDestination(sortedLocations[0].id);
   }
+}
+
+function populateSearchCityDropdown() {
+  if (!elements.selectSearchCity) return;
+  elements.selectSearchCity.innerHTML = '<option value="All">All Cities</option>';
+
+  const sortedLocations = [...state.locations].sort((a, b) => {
+    if (a.name === 'Pune') return -1;
+    if (b.name === 'Pune') return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  sortedLocations.forEach(loc => {
+    const opt = document.createElement('option');
+    opt.value = loc.name;
+    opt.textContent = `${loc.name}`;
+    elements.selectSearchCity.appendChild(opt);
+  });
+
+  elements.selectSearchCity.addEventListener('change', (e) => {
+    state.activeSearchCity = e.target.value;
+    if (elements.mapCityLabel) {
+      elements.mapCityLabel.textContent = state.activeSearchCity === 'All' ? 'All Cities' : state.activeSearchCity;
+    }
+    executeSearch();
+  });
+}
+
+/* -------------------------------------------------------------------------
+   LEAFLET MAP INTEGRATION
+   ------------------------------------------------------------------------- */
+function initLeafletMap() {
+  if (typeof L === 'undefined') {
+    console.warn('Leaflet library not loaded.');
+    return;
+  }
+  if (state.map) return;
+
+  const mapContainer = document.getElementById('attractions-map');
+  if (!mapContainer) return;
+
+  // Center on India (approx 20.5937, 78.9629)
+  state.map = L.map('attractions-map', {
+    scrollWheelZoom: false
+  }).setView([18.5204, 73.8567], 11); // Default centered on Pune
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+  }).addTo(state.map);
+}
+
+function updateMapMarkers(attractions) {
+  if (!state.map || typeof L === 'undefined') return;
+
+  // Clear existing markers
+  state.mapMarkers.forEach(m => m.remove());
+  state.mapMarkers = [];
+
+  const validAttractions = (attractions || []).filter(a => a.latitude && a.longitude && (a.latitude !== 0 || a.longitude !== 0));
+
+  if (validAttractions.length === 0) return;
+
+  const latLngs = [];
+
+  validAttractions.forEach(a => {
+    const marker = L.marker([a.latitude, a.longitude]);
+    const feeText = a.ticketCost > 0 ? formatINR(a.ticketCost) : 'Free Entry';
+    const popupContent = `
+      <div class="map-popup">
+        <div class="map-popup-title">${a.name}</div>
+        <div class="map-popup-meta">
+          <span class="map-popup-badge">${a.category}</span>
+          <span>📍 ${a.locationName || ''}</span>
+        </div>
+        <div style="font-size:0.8rem; margin-bottom: 5px; color: var(--text-muted);">${(a.description || '').substring(0, 100)}...</div>
+        <div class="map-popup-price">Ticket: ${feeText} &bull; Rating: ⭐ ${a.rating.toFixed(1)}</div>
+      </div>
+    `;
+    marker.bindPopup(popupContent);
+    marker.addTo(state.map);
+    marker.attractionId = a.id;
+    state.mapMarkers.push(marker);
+    latLngs.push([a.latitude, a.longitude]);
+  });
+
+  if (latLngs.length > 0) {
+    if (latLngs.length === 1) {
+      state.map.setView(latLngs[0], 13);
+    } else {
+      const bounds = L.latLngBounds(latLngs);
+      state.map.fitBounds(bounds, { padding: [35, 35], maxZoom: 14 });
+    }
+  }
+
+  setTimeout(() => {
+    if (state.map) state.map.invalidateSize();
+  }, 250);
 }
 
 /* -------------------------------------------------------------------------
@@ -275,17 +394,17 @@ elements.btnSelectAllAttrs.addEventListener('click', () => {
 });
 
 elements.btnClearAttrs.addEventListener('click', () => {
+  state.selectedAttrIds.clear();
   const chips = elements.attractionChipsContainer.querySelectorAll('.chip-label');
   chips.forEach(chip => {
     chip.classList.remove('active');
     const cb = chip.querySelector('input');
     if (cb) cb.checked = false;
   });
-  state.selectedAttrIds.clear();
 });
 
 /* -------------------------------------------------------------------------
-   TRIP PLAN SUBMISSION & RENDERING
+   TRIP PLAN GENERATION (Exact TSP, INR Budget, Route Hops)
    ------------------------------------------------------------------------- */
 elements.tripForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -295,11 +414,16 @@ elements.tripForm.addEventListener('submit', async (e) => {
   const numTravellers = parseInt(elements.inputTravellers.value, 10);
   const userBudget = parseFloat(elements.inputBudget.value);
   const travelStyle = document.querySelector('input[name="travelStyle"]:checked').value;
-
   const attrIds = Array.from(state.selectedAttrIds);
 
-  elements.planLoader.style.display = 'inline-block';
+  if (isNaN(destId)) {
+    showToast('Please select a destination city.', 'error');
+    return;
+  }
+
+  // Loader state
   elements.btnGeneratePlan.disabled = true;
+  elements.planLoader.style.display = 'block';
 
   try {
     const response = await fetch('/api/plan-trip', {
@@ -317,136 +441,140 @@ elements.tripForm.addEventListener('submit', async (e) => {
 
     const data = await response.json();
 
-    if (!data.success || !data.plan) {
-      showToast(data.error || 'Failed to generate trip plan.', 'error');
-      return;
+    if (data.success && data.plan) {
+      state.currentPlan = data.plan;
+      state.currentPlan.formParams = { destId, numDays, numTravellers, userBudget, travelStyle };
+
+      renderTripResults(data.plan);
+      elements.resultsSection.classList.remove('hidden');
+      elements.resultsSection.scrollIntoView({ behavior: 'smooth' });
+      showToast('Optimal trip plan generated successfully!', 'success');
+    } else {
+      showToast(data.error || 'Failed to generate plan. Please try again.', 'error');
     }
 
-    state.currentPlan = {
-      ...data.plan,
-      formParams: { destId, numDays, numTravellers, userBudget, travelStyle }
-    };
-
-    renderTripPlanDashboard(state.currentPlan);
-    elements.resultsSection.classList.remove('hidden');
-    elements.resultsSection.scrollIntoView({ behavior: 'smooth' });
-    showToast('Your personalized itinerary has been created!', 'success');
-
   } catch (err) {
-    console.error('Plan generation error:', err);
-    showToast('Communication error with travel server.', 'error');
+    console.error('Trip plan generation error:', err);
+    showToast('Network error while planning trip.', 'error');
   } finally {
-    elements.planLoader.style.display = 'none';
     elements.btnGeneratePlan.disabled = false;
+    elements.planLoader.style.display = 'none';
   }
 });
 
-function renderTripPlanDashboard(plan) {
-  const { route, itinerary, budget, formParams } = plan;
-  const destLoc = state.locations.find(l => l.id === formParams.destId);
-  const cityName = destLoc ? destLoc.name : (plan.destinationCity || 'Destination');
-
-  document.getElementById('plan-title-heading').textContent =
-    `${cityName} City Vacation Blueprint`;
-  document.getElementById('plan-sub-heading').textContent =
-    `${formParams.numDays} Days • ${formParams.numTravellers} Guests • ${formParams.travelStyle} Style • Fully Optimized`;
+/* -------------------------------------------------------------------------
+   RENDER TRIP BLUEPRINT
+   ------------------------------------------------------------------------- */
+function renderTripResults(plan) {
+  const { destinationCity, route, itinerary, budget } = plan;
 
   /* 1. Route Section */
   elements.metricDist.textContent = `${route.totalDistanceKm.toFixed(1)} km`;
   const hrs = Math.floor(route.totalTimeMin / 60);
   const mins = route.totalTimeMin % 60;
-  elements.metricTime.textContent = `${hrs > 0 ? `${hrs}h ` : ''}${mins}m`;
+  elements.metricTime.textContent = `${hrs}h ${mins}m`;
   elements.metricStops.textContent = itinerary.totalAttractionsScheduled;
-  elements.metricDays.textContent = `${formParams.numDays} Days`;
+  elements.metricDays.textContent = `${itinerary.numDays} Days`;
 
   elements.routeStatusText.textContent = route.statusMessage;
-  elements.routeReachableBadge.textContent = `${cityName} Tour`;
-  elements.routeReachableBadge.className = 'badge';
-  elements.routeStatusAlert.className = 'alert-box success';
+  elements.routeReachableBadge.textContent = route.reachable ? 'Route Verified' : 'Unreachable';
 
-  // Render hops
+  // Render hops timeline
   elements.hopsContainer.innerHTML = '';
-  if (route.hops.length === 0) {
-    elements.hopsContainer.innerHTML = `<div class="hop-item"><span>Scenic walking & central transit route mapped for ${cityName}.</span></div>`;
-  } else {
-    route.hops.forEach((hop, i) => {
-      const hopItem = document.createElement('div');
-      hopItem.className = 'hop-item';
-      hopItem.innerHTML = `
-        <div class="hop-route">
-          <span>Day ${hop.day || 1} &bull; ${hop.fromName}</span>
-          <span class="hop-arrow">➔</span>
-          <span>${hop.toName}</span>
-        </div>
-        <div class="hop-stats">
-          <span>${hop.distanceKm.toFixed(1)} km</span>
-          <span>${hop.travelTimeMin} mins</span>
+  if (route.hops && route.hops.length > 0) {
+    route.hops.forEach((h, idx) => {
+      const hop = document.createElement('div');
+      hop.className = 'hop-item';
+      hop.innerHTML = `
+        <div class="hop-badge">Leg ${idx + 1}</div>
+        <div class="hop-content">
+          <div class="hop-names">
+            <span class="from-name">${h.fromName}</span>
+            <span class="arrow">➔</span>
+            <span class="to-name">${h.toName}</span>
+          </div>
+          <div class="hop-meta">
+            <span>Day ${h.day}</span> &bull;
+            <span>${h.distanceKm.toFixed(1)} km</span> &bull;
+            <span>${h.travelTimeMin} mins transit</span>
+          </div>
         </div>
       `;
-      elements.hopsContainer.appendChild(hopItem);
+      elements.hopsContainer.appendChild(hop);
+    });
+  } else {
+    elements.hopsContainer.innerHTML = `<div class="placeholder-text">All scheduled sights are conveniently located within central ${destinationCity}.</div>`;
+  }
+
+  /* 2. Day-by-Day Itinerary Schedule */
+  elements.totalScheduledBadge.textContent = `${itinerary.totalAttractionsScheduled} Sights Scheduled`;
+  elements.daySchedulesList.innerHTML = '';
+
+  if (itinerary.days && itinerary.days.length > 0) {
+    itinerary.days.forEach(day => {
+      const dayCard = document.createElement('div');
+      dayCard.className = 'day-card';
+
+      let itemsHtml = '';
+      if (day.items && day.items.length > 0) {
+        day.items.forEach(it => {
+          itemsHtml += `
+            <div class="schedule-item">
+              <div class="item-time">
+                <span class="time-range">${formatHHMM(it.visitStartTime)} - ${formatHHMM(it.visitEndTime)}</span>
+                <span class="item-duration">${it.visitDurationMin} mins</span>
+              </div>
+              <div class="item-details">
+                <div class="item-header">
+                  <span class="item-name">${it.name}</span>
+                  <span class="badge info">${it.category}</span>
+                </div>
+                <div class="item-meta">
+                  <span>Entry: ${it.ticketCost > 0 ? formatINR(it.ticketCost) : 'Free'}</span>
+                  ${it.timingNote ? `<span class="timing-note">• ${it.timingNote}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        itemsHtml = '<div class="placeholder-text">Leisure day for relaxation, shopping, and local culinary exploration.</div>';
+      }
+
+      dayCard.innerHTML = `
+        <div class="day-header">
+          <div class="day-title">Day ${day.dayNumber}</div>
+          <div class="day-stats">
+            <span>${day.itemCount} Stops</span> &bull;
+            <span>${formatHHMM(day.dayStartTime)} to ${formatHHMM(day.dayEndTime)}</span> &bull;
+            <span>Tickets: ${formatINR(day.totalTicketCost)}</span>
+          </div>
+        </div>
+        <div class="day-items-list">${itemsHtml}</div>
+      `;
+
+      elements.daySchedulesList.appendChild(dayCard);
     });
   }
 
-  /* 2. Day-Wise Itinerary */
-  elements.totalScheduledBadge.textContent = `${itinerary.totalAttractionsScheduled} Attractions Scheduled`;
-  elements.daySchedulesList.innerHTML = '';
-
-  itinerary.days.forEach(day => {
-    const dayCard = document.createElement('div');
-    dayCard.className = 'day-card';
-
-    const activeH = Math.floor(day.totalActiveMinutes / 60);
-    const activeM = day.totalActiveMinutes % 60;
-
-    let itemsHtml = '';
-    if (day.items.length === 0) {
-      itemsHtml = '<div class="timeline-item"><div class="item-content">Rest & relaxation day, or free local shopping.</div></div>';
-    } else {
-      day.items.forEach(item => {
-        itemsHtml += `
-          <div class="timeline-item">
-            <div class="time-slot">${formatHHMM(item.visitStartTime)} - ${formatHHMM(item.visitEndTime)}</div>
-            <div class="item-content">
-              <h5>${item.name}</h5>
-              <div class="item-meta">
-                <span>📂 ${item.category}</span>
-                <span>⏱️ Duration: ${item.visitDurationMin} mins</span>
-                <span>🚗 Transit: ${item.arrivalTime < item.visitStartTime ? 'Early wait' : 'Direct'}</span>
-              </div>
-              <div class="item-note">💡 ${item.timingNote}</div>
-            </div>
-            <div class="item-cost">${item.ticketCost > 0 ? formatINR(item.ticketCost) : 'Free Entry'}</div>
-          </div>
-        `;
-      });
-    }
-
-    dayCard.innerHTML = `
-      <div class="day-card-header">
-        <h4>Day ${day.dayNumber} Itinerary</h4>
-        <div class="day-summary-badges">
-          <span class="day-badge">Active: ${activeH}h ${activeM}m</span>
-          <span class="day-badge">Tickets: ${formatINR(day.totalTicketCost)}</span>
-          <span class="day-badge">${day.items.length} Sights</span>
-        </div>
-      </div>
-      <div class="day-items-timeline">${itemsHtml}</div>
-    `;
-
-    elements.daySchedulesList.appendChild(dayCard);
-  });
-
-  /* 3. Budget Breakdown in INR (₹) */
+  /* 3. Budget Section (INR ₹) */
   elements.budgetSpentLabel.textContent = formatINR(budget.totalExpense);
   elements.budgetTotalLabel.textContent = formatINR(budget.userBudget);
-  elements.budgetRemainingVal.textContent = formatINR(budget.remainingBudget);
 
-  const percentUsed = Math.min(100, Math.max(0, (budget.totalExpense / budget.userBudget) * 100));
-  elements.budgetProgressFill.style.width = `${percentUsed}%`;
+  const spentRatio = Math.min(100, Math.max(0, (budget.totalExpense / budget.userBudget) * 100));
+  elements.budgetProgressFill.style.width = `${spentRatio}%`;
+
+  if (budget.remainingBudget >= 0) {
+    elements.budgetRemainingVal.textContent = formatINR(budget.remainingBudget);
+    elements.budgetRemainingVal.style.color = '#10b981';
+  } else {
+    elements.budgetRemainingVal.textContent = `-${formatINR(Math.abs(budget.remainingBudget))}`;
+    elements.budgetRemainingVal.style.color = '#ef4444';
+  }
 
   elements.budgetStatusPill.textContent = budget.status;
   if (budget.status === 'Within Budget') {
-    elements.budgetStatusPill.className = 'badge';
+    elements.budgetStatusPill.className = 'badge success';
     elements.budgetWarningBox.className = 'alert-box success';
     elements.budgetWarningIcon.textContent = '✅';
   } else if (budget.status === 'Near Limit') {
@@ -551,44 +679,44 @@ if (elements.btnSaveTrip) {
   elements.btnSaveTrip.addEventListener('click', async () => {
     if (!state.currentPlan) return;
 
-  const { formParams, budget, route } = state.currentPlan;
-  const destLoc = state.locations.find(l => l.id === formParams.destId);
-  const cityName = destLoc ? destLoc.name : (state.currentPlan.destinationCity || 'Vacation');
+    const { formParams, budget, route } = state.currentPlan;
+    const destLoc = state.locations.find(l => l.id === formParams.destId);
+    const cityName = destLoc ? destLoc.name : (state.currentPlan.destinationCity || 'Vacation');
 
-  const defaultTripName = `${cityName} Expedition`;
-  const tripName = prompt('Enter a title for this trip itinerary:', defaultTripName) || defaultTripName;
+    const defaultTripName = `${cityName} Tour`;
+    const tripName = prompt('Enter a title for this trip itinerary:', defaultTripName) || defaultTripName;
 
-  const today = new Date().toISOString().split('T')[0];
-  const startDate = prompt('Enter planned start date (YYYY-MM-DD):', today) || today;
+    const today = new Date().toISOString().split('T')[0];
+    const startDate = prompt('Enter planned start date (YYYY-MM-DD):', today) || today;
 
-  try {
-    const res = await fetch('/api/trips', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tripName,
-        startDate,
-        destLocation: cityName,
-        numDays: formParams.numDays,
-        numTravellers: formParams.numTravellers,
-        totalBudget: budget.userBudget,
-        estimatedCost: budget.totalExpense,
-        totalDistanceKm: route.totalDistanceKm,
-        travelStyle: formParams.travelStyle,
-        notes: `Trip to ${cityName}. Planned transit: ${route.totalDistanceKm.toFixed(1)} km.`
-      })
-    });
+    try {
+      const res = await fetch('/api/trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tripName,
+          startDate,
+          destLocation: cityName,
+          numDays: formParams.numDays,
+          numTravellers: formParams.numTravellers,
+          totalBudget: budget.userBudget,
+          estimatedCost: budget.totalExpense,
+          totalDistanceKm: route.totalDistanceKm,
+          travelStyle: formParams.travelStyle,
+          notes: `Trip to ${cityName}. Planned transit: ${route.totalDistanceKm.toFixed(1)} km.`
+        })
+      });
 
-    const data = await res.json();
-    if (data.success) {
-      showToast(`Trip #${data.tripId} saved successfully!`, 'success');
-      loadSavedTrips();
-    } else {
-      showToast(data.error || 'Failed to save trip.', 'error');
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Trip #${data.tripId} saved successfully!`, 'success');
+        loadSavedTrips();
+      } else {
+        showToast(data.error || 'Failed to save trip.', 'error');
+      }
+    } catch (err) {
+      showToast('Failed to save trip.', 'error');
     }
-  } catch (err) {
-    showToast('Failed to save trip.', 'error');
-  }
   });
 }
 
@@ -597,7 +725,7 @@ elements.btnPrintPlan.addEventListener('click', () => {
 });
 
 /* -------------------------------------------------------------------------
-   SAVED TRIPS TABLE
+   SAVED TRIPS TABLE & DETAILED VIEW
    ------------------------------------------------------------------------- */
 async function loadSavedTrips() {
   try {
@@ -627,14 +755,21 @@ function renderSavedTripsTable(trips) {
       <td><strong>#${t.tripId}</strong></td>
       <td><strong>${t.tripName}</strong></td>
       <td><code>${t.startDate}</code></td>
-      <td>📍 ${t.destLocation || t.sourceLocation}</td>
+      <td class="dest-col" style="white-space: nowrap;">📍 ${t.destLocation || t.sourceLocation}</td>
       <td>${t.numDays}d / ${t.numTravellers} guests</td>
       <td><strong style="color: #10b981;">${formatINR(t.estimatedCost)}</strong></td>
       <td><span class="badge info">${t.travelStyle}</span></td>
       <td>
-        <button class="btn-icon-del" data-id="${t.tripId}" title="Remove saved trip">🗑️ Delete</button>
+        <div class="trip-action-group">
+          <button class="btn-view-trip" data-id="${t.tripId}" title="View Complete Trip Details">View Trip</button>
+          <button class="btn-icon-del" data-id="${t.tripId}" title="Remove saved trip">🗑️</button>
+        </div>
       </td>
     `;
+
+    row.querySelector('.btn-view-trip').addEventListener('click', () => {
+      viewTripDetails(t.tripId);
+    });
 
     row.querySelector('.btn-icon-del').addEventListener('click', async () => {
       if (confirm(`Delete trip #${t.tripId} ("${t.tripName}")?`)) {
@@ -645,6 +780,210 @@ function renderSavedTripsTable(trips) {
     elements.savedTripsTbody.appendChild(row);
   });
 }
+
+/* -------------------------------------------------------------------------
+   VIEW SAVED TRIP DETAILS MODAL
+   ------------------------------------------------------------------------- */
+async function viewTripDetails(tripId) {
+  const trip = state.savedTrips.find(t => t.tripId === tripId);
+  if (!trip) {
+    showToast('Trip not found.', 'error');
+    return;
+  }
+
+  elements.modalTripName.textContent = trip.tripName;
+  elements.modalTripMeta.textContent = `Trip #${trip.tripId} • ${trip.destLocation || 'Destination'} • Departure: ${trip.startDate}`;
+  elements.modalTripBody.innerHTML = '<div style="text-align:center; padding:2rem;"><div class="loader" style="display:inline-block;"></div><p style="margin-top:10px;">Generating comprehensive trip itinerary...</p></div>';
+  elements.savedTripModal.classList.remove('hidden');
+
+  try {
+    // Resolve destination city ID
+    const destName = (trip.destLocation || trip.sourceLocation || 'Pune').toLowerCase();
+    const matchedLoc = state.locations.find(l => l.name.toLowerCase() === destName);
+    const destId = matchedLoc ? matchedLoc.id : 13;
+
+    // Fetch optimized plan from C backend
+    const res = await fetch('/api/plan-trip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        destId,
+        numDays: trip.numDays,
+        numTravellers: trip.numTravellers,
+        userBudget: trip.totalBudget,
+        travelStyle: trip.travelStyle || 'Standard'
+      })
+    });
+
+    const data = await res.json();
+    if (!data.success || !data.plan) {
+      elements.modalTripBody.innerHTML = `<div class="alert-box danger">Failed to load detailed itinerary: ${data.error || 'Server error'}</div>`;
+      return;
+    }
+
+    const { route, itinerary, budget } = data.plan;
+
+    // Render comprehensive modal view
+    let daysHtml = '';
+    itinerary.days.forEach(day => {
+      let itemsHtml = '';
+      if (day.items && day.items.length > 0) {
+        day.items.forEach(it => {
+          itemsHtml += `
+            <div class="modal-item-row">
+              <div>
+                <strong>${it.name}</strong>
+                <span class="badge info" style="font-size:0.7rem; margin-left:6px;">${it.category}</span>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">
+                  ${formatHHMM(it.visitStartTime)} - ${formatHHMM(it.visitEndTime)} (${it.visitDurationMin} mins)
+                  ${it.timingNote ? `• ${it.timingNote}` : ''}
+                </div>
+              </div>
+              <div style="font-weight:700; color:var(--text-main);">
+                ${it.ticketCost > 0 ? formatINR(it.ticketCost) : 'Free'}
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        itemsHtml = '<div style="font-size:0.85rem; color:var(--text-muted);">Leisure sightseeing and local relaxation.</div>';
+      }
+
+      daysHtml += `
+        <div class="modal-itinerary-day">
+          <div class="modal-day-title">
+            <span>Day ${day.dayNumber} Sightseeing</span>
+            <span>${day.itemCount} Stops &bull; ${formatINR(day.totalTicketCost)} Tickets</span>
+          </div>
+          <div>${itemsHtml}</div>
+        </div>
+      `;
+    });
+
+    elements.modalTripBody.innerHTML = `
+      <!-- Stat Highlights -->
+      <div class="modal-stat-grid">
+        <div class="modal-stat-card">
+          <div class="modal-stat-label">Destination</div>
+          <div class="modal-stat-val">📍 ${trip.destLocation}</div>
+        </div>
+        <div class="modal-stat-card">
+          <div class="modal-stat-label">Starting Location</div>
+          <div class="modal-stat-val">Pune (Hub)</div>
+        </div>
+        <div class="modal-stat-card">
+          <div class="modal-stat-label">Duration & Guests</div>
+          <div class="modal-stat-val">${trip.numDays} Days / ${trip.numTravellers} Guests</div>
+        </div>
+        <div class="modal-stat-card">
+          <div class="modal-stat-label">Allocated Budget</div>
+          <div class="modal-stat-val">${formatINR(trip.totalBudget)}</div>
+        </div>
+        <div class="modal-stat-card">
+          <div class="modal-stat-label">Estimated Spend</div>
+          <div class="modal-stat-val" style="color:#10b981;">${formatINR(budget.totalExpense)}</div>
+        </div>
+        <div class="modal-stat-card">
+          <div class="modal-stat-label">Remaining Buffer</div>
+          <div class="modal-stat-val" style="color:${budget.remainingBudget >= 0 ? '#10b981' : '#ef4444'};">
+            ${formatINR(budget.remainingBudget)}
+          </div>
+        </div>
+      </div>
+
+      <!-- Route & Transit -->
+      <div style="background:var(--bg-subtle); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+        <div class="modal-section-title">🧭 Sightseeing Circuit & Route</div>
+        <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:0.5rem;">
+          ${route.statusMessage}
+        </p>
+        <div style="font-size:0.84rem; display:flex; gap:1.25rem;">
+          <span><strong>Total Distance:</strong> ${route.totalDistanceKm.toFixed(1)} km</span>
+          <span><strong>Est. Transit Time:</strong> ${Math.floor(route.totalTimeMin / 60)}h ${route.totalTimeMin % 60}m</span>
+          <span><strong>Planned Stops:</strong> ${itinerary.totalAttractionsScheduled}</span>
+        </div>
+      </div>
+
+      <!-- Day-by-Day Itinerary Schedule -->
+      <div>
+        <div class="modal-section-title">📆 Day-by-Day Sightseeing Schedule (Exact TSP Optimized)</div>
+        ${daysHtml}
+      </div>
+
+      <!-- Accommodation -->
+      <div style="border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem; background:var(--bg-card);">
+        <div class="modal-section-title">🏨 Recommended Accommodation</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong style="font-size:0.95rem;">${budget.selectedHotel.name}</strong>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
+              ⭐ ${budget.selectedHotel.rating.toFixed(1)} / 5.0 &bull; Tier: ${budget.selectedHotel.tier} &bull; ${budget.selectedHotel.distFromCenterKm ? `${budget.selectedHotel.distFromCenterKm.toFixed(1)} km from center` : 'Central'}
+            </div>
+          </div>
+          <div style="font-size:1rem; font-weight:800; color:var(--text-main);">
+            ${formatINR(budget.selectedHotel.pricePerNight)}<span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">/night</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Itemized Budget Breakdown -->
+      <div style="background:var(--bg-subtle); padding:1.25rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+        <div class="modal-section-title">💰 Itemized Budget Breakdown (INR ₹)</div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:0.75rem; margin-top:0.75rem;">
+          <div style="background:var(--bg-card); padding:0.65rem 0.85rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Hotel Lodging</div>
+            <div style="font-weight:700; margin-top:2px;">${formatINR(budget.hotelExpense)}</div>
+          </div>
+          <div style="background:var(--bg-card); padding:0.65rem 0.85rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Food & Dining</div>
+            <div style="font-weight:700; margin-top:2px;">${formatINR(budget.foodExpense)}</div>
+          </div>
+          <div style="background:var(--bg-card); padding:0.65rem 0.85rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Local Transit</div>
+            <div style="font-weight:700; margin-top:2px;">${formatINR(budget.transportExpense)}</div>
+          </div>
+          <div style="background:var(--bg-card); padding:0.65rem 0.85rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Attractions & Passes</div>
+            <div style="font-weight:700; margin-top:2px;">${formatINR(budget.activityExpense)}</div>
+          </div>
+          <div style="background:var(--bg-card); padding:0.65rem 0.85rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Emergency Buffer</div>
+            <div style="font-weight:700; margin-top:2px;">${formatINR(budget.emergencyBuffer)}</div>
+          </div>
+          <div style="background:var(--primary-light); padding:0.65rem 0.85rem; border-radius:var(--radius-sm); border:1px solid var(--primary);">
+            <div style="font-size:0.75rem; color:var(--primary); font-weight:700;">Grand Total</div>
+            <div style="font-weight:800; font-size:1.1rem; color:var(--primary); margin-top:2px;">${formatINR(budget.totalExpense)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+  } catch (err) {
+    console.error('Error rendering trip details:', err);
+    elements.modalTripBody.innerHTML = '<div class="alert-box danger">Failed to fetch trip details.</div>';
+  }
+}
+
+function closeTripModal() {
+  elements.savedTripModal.classList.add('hidden');
+}
+
+if (elements.btnCloseTripModal) {
+  elements.btnCloseTripModal.addEventListener('click', closeTripModal);
+}
+if (elements.btnModalBack) {
+  elements.btnModalBack.addEventListener('click', closeTripModal);
+}
+if (elements.savedTripModal) {
+  elements.savedTripModal.addEventListener('click', (e) => {
+    if (e.target === elements.savedTripModal) closeTripModal();
+  });
+}
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && elements.savedTripModal && !elements.savedTripModal.classList.contains('hidden')) {
+    closeTripModal();
+  }
+});
 
 async function deleteTrip(tripId) {
   try {
@@ -682,20 +1021,24 @@ elements.btnRefreshTrips.addEventListener('click', () => {
 });
 
 /* -------------------------------------------------------------------------
-   ATTRACTION SEARCH
+   ATTRACTION SEARCH WITH COMBINED CITY & CATEGORY FILTERS
    ------------------------------------------------------------------------- */
 async function executeSearch() {
-  const query = elements.inputSearchQuery.value.trim();
+  const query = elements.inputSearchQuery ? elements.inputSearchQuery.value.trim() : '';
   const category = state.activeSearchCategory;
+  const city = state.activeSearchCity;
 
   try {
-    const url = `/api/search?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`;
+    const url = `/api/search?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`;
     const res = await fetch(url);
     const data = await res.json();
 
     if (data.success) {
       renderSearchResults(data.results);
-      elements.searchCountLabel.textContent = data.count;
+      if (elements.searchCountLabel) {
+        elements.searchCountLabel.textContent = data.count;
+      }
+      updateMapMarkers(data.results);
     }
   } catch (err) {
     console.error('Search error:', err);
@@ -707,13 +1050,16 @@ function renderSearchResults(results) {
 
   if (!results || results.length === 0) {
     elements.searchResultsContainer.innerHTML =
-      '<div class="placeholder-text">No attractions found matching your search. Try another city or keyword.</div>';
+      '<div class="placeholder-text">No attractions found matching your search. Try another city or category.</div>';
     return;
   }
 
   results.forEach(a => {
     const card = document.createElement('div');
     card.className = 'attraction-search-card';
+    card.style.cursor = 'pointer';
+    card.title = 'Click to focus on map';
+
     card.innerHTML = `
       <div>
         <div class="attr-card-header">
@@ -730,6 +1076,22 @@ function renderSearchResults(results) {
         <div class="attr-fee">${a.ticketCost > 0 ? formatINR(a.ticketCost) : 'Free Entry'}</div>
       </div>
     `;
+
+    // Click attraction card to zoom to its pin on the Leaflet map
+    card.addEventListener('click', () => {
+      if (state.map && a.latitude && a.longitude) {
+        state.map.setView([a.latitude, a.longitude], 14, { animate: true });
+        const targetMarker = state.mapMarkers.find(m => m.attractionId === a.id);
+        if (targetMarker) {
+          targetMarker.openPopup();
+        }
+        const mapEl = document.getElementById('attractions-map');
+        if (mapEl) {
+          mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    });
+
     elements.searchResultsContainer.appendChild(card);
   });
 }
@@ -763,7 +1125,15 @@ document.querySelectorAll('.nav-link').forEach(link => {
   link.addEventListener('click', () => {
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     link.classList.add('active');
+    setTimeout(() => {
+      if (state.map) state.map.invalidateSize();
+    }, 200);
   });
+});
+
+/* Invalidate Leaflet map size on window resize */
+window.addEventListener('resize', () => {
+  if (state.map) state.map.invalidateSize();
 });
 
 /* Initialize application on load */

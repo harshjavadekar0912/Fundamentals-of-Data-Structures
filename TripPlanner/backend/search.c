@@ -152,17 +152,38 @@ static int isAlreadyInResults(const int* arr, int count, int id) {
     return 0;
 }
 
+static int matchesCategoryAndCity(const MasterData* data,
+                                  const Attraction* a,
+                                  int hasCategory,
+                                  const char* categoryFilter,
+                                  int hasCity,
+                                  const char* cityFilter) {
+    if (!a) return 0;
+    if (hasCategory && strcasecmp(a->category, categoryFilter) != 0) {
+        return 0;
+    }
+    if (hasCity) {
+        const Location* loc = findLocationById(data, a->locationId);
+        if (!loc || strcasecmp(loc->name, cityFilter) != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int searchAttractions(const HashTable* ht,
                       const MasterData* data,
                       const char* query,
                       const char* categoryFilter,
+                      const char* cityFilter,
                       int* resultIds,
                       int maxResults) {
     if (!ht || !data || !resultIds || maxResults <= 0) return 0;
 
     int matchCount = 0;
     int hasQuery = (query && strlen(query) > 0);
-    int hasCategory = (categoryFilter && strlen(categoryFilter) > 0 && strcasecmp(categoryFilter, "All") != 0);
+    int hasCategory = (categoryFilter && strlen(categoryFilter) > 0 && strcasecmp(categoryFilter, "All") != 0 && strcasecmp(categoryFilter, "_EMPTY_") != 0);
+    int hasCity = (cityFilter && strlen(cityFilter) > 0 && strcasecmp(cityFilter, "All") != 0 && strcasecmp(cityFilter, "All Cities") != 0 && strcasecmp(cityFilter, "_EMPTY_") != 0);
 
     char normQuery[128];
     if (hasQuery) {
@@ -178,11 +199,9 @@ int searchAttractions(const HashTable* ht,
         while (curr && matchCount < maxResults) {
             if (strstr(curr->key, normQuery) != NULL) {
                 const Attraction* a = findAttractionById(data, curr->attractionId);
-                if (a) {
-                    if (!hasCategory || strcasecmp(a->category, categoryFilter) == 0) {
-                        if (!isAlreadyInResults(resultIds, matchCount, a->id)) {
-                            resultIds[matchCount++] = a->id;
-                        }
+                if (matchesCategoryAndCity(data, a, hasCategory, categoryFilter, hasCity, cityFilter)) {
+                    if (!isAlreadyInResults(resultIds, matchCount, a->id)) {
+                        resultIds[matchCount++] = a->id;
                     }
                 }
             }
@@ -202,7 +221,7 @@ int searchAttractions(const HashTable* ht,
                 while (tNode && matchCount < maxResults) {
                     if (strcasecmp(tNode->key, qTok) == 0 || strstr(tNode->key, qTok) != NULL) {
                         const Attraction* a = findAttractionById(data, tNode->attractionId);
-                        if (a && (!hasCategory || strcasecmp(a->category, categoryFilter) == 0)) {
+                        if (matchesCategoryAndCity(data, a, hasCategory, categoryFilter, hasCity, cityFilter)) {
                             if (!isAlreadyInResults(resultIds, matchCount, a->id)) {
                                 resultIds[matchCount++] = a->id;
                             }
@@ -230,7 +249,7 @@ int searchAttractions(const HashTable* ht,
             if (strstr(lowerName, normQuery) != NULL ||
                 strstr(lowerCity, normQuery) != NULL ||
                 strstr(lowerDesc, normQuery) != NULL) {
-                if (!hasCategory || strcasecmp(a->category, categoryFilter) == 0) {
+                if (matchesCategoryAndCity(data, a, hasCategory, categoryFilter, hasCity, cityFilter)) {
                     if (!isAlreadyInResults(resultIds, matchCount, a->id)) {
                         resultIds[matchCount++] = a->id;
                     }
@@ -238,32 +257,34 @@ int searchAttractions(const HashTable* ht,
             }
         }
     }
-    /* CASE 2: No query, only category filter -> use Category Hash Bucket or scan */
-    else if (hasCategory) {
-        unsigned int catBucket = hashFunction(categoryFilter);
-        HashNode* curr = ht->buckets[catBucket];
+    /* CASE 2: No query, but category or city filter active */
+    else if (hasCategory || hasCity) {
+        if (hasCategory && !hasCity) {
+            unsigned int catBucket = hashFunction(categoryFilter);
+            HashNode* curr = ht->buckets[catBucket];
 
-        while (curr && matchCount < maxResults) {
-            if (strcasecmp(curr->key, categoryFilter) == 0) {
-                const Attraction* a = findAttractionById(data, curr->attractionId);
-                if (a && !isAlreadyInResults(resultIds, matchCount, a->id)) {
-                    resultIds[matchCount++] = a->id;
+            while (curr && matchCount < maxResults) {
+                if (strcasecmp(curr->key, categoryFilter) == 0) {
+                    const Attraction* a = findAttractionById(data, curr->attractionId);
+                    if (a && !isAlreadyInResults(resultIds, matchCount, a->id)) {
+                        resultIds[matchCount++] = a->id;
+                    }
                 }
+                curr = curr->next;
             }
-            curr = curr->next;
         }
 
-        /* Fallback linear scan if hash bucket missed any */
+        /* Linear scan to ensure complete and combined filtering */
         for (int i = 0; i < data->numAttractions && matchCount < maxResults; i++) {
             const Attraction* a = &data->attractions[i];
-            if (strcasecmp(a->category, categoryFilter) == 0) {
+            if (matchesCategoryAndCity(data, a, hasCategory, categoryFilter, hasCity, cityFilter)) {
                 if (!isAlreadyInResults(resultIds, matchCount, a->id)) {
                     resultIds[matchCount++] = a->id;
                 }
             }
         }
     }
-    /* CASE 3: Neither query nor category -> return all attractions up to maxResults */
+    /* CASE 3: No filters active -> return all attractions up to maxResults */
     else {
         for (int i = 0; i < data->numAttractions && matchCount < maxResults; i++) {
             resultIds[matchCount++] = data->attractions[i].id;

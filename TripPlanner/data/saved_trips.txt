@@ -1,5 +1,10 @@
-1001|Pune Heritage & Sahyadri Forts|2026-11-15|20261115|Pune|Pune|3|2|25000.00|18500.00|48.00|Standard|Shaniwar Wada, Sinhagad Fort trek, and Dagdusheth Ganpati Temple
-5651|Goa Expedition|2026-11-16|20261116|Goa|Goa|3|2|25000.00|24898.90|35.00|Standard|Trip to Goa. Planned transit: 35.0 km.
-1002|Jaipur Royal Palaces & Bazaars|2026-11-28|20261128|Jaipur|Jaipur|3|2|30000.00|22400.00|38.00|Standard|Amber Palace, Hawa Mahal, Jantar Mantar and local bazaars
-1003|Udaipur Royal Lakes & Haveli Stay|2026-12-10|20261210|Udaipur|Udaipur|4|2|65000.00|52000.00|42.00|Luxury|Heritage stay by Lake Pichola, sunset boat cruise and City Palace
-1004|Mumbai Coastal City Tour|2026-12-24|20261224|Mumbai|Mumbai|3|3|35000.00|28500.00|35.00|Standard|Gateway of India, Marine Drive sunset and Elephanta Caves
+1001|Pune Heritage & Sahyadri Forts|2026-11-20|20261120|Pune|Pune|3|2|25000.00|18500.00|48.00|Standard|Shaniwar Wada, Sinhagad Fort, Aga Khan Palace, and Dagdusheth Ganpati
+1002|Mumbai Coastal Skyline & Heritage|2026-11-25|20261125|Mumbai|Mumbai|3|2|35000.00|28400.00|36.00|Standard|Gateway of India, Marine Drive Queen's Necklace, Bandra Fort, and Elephanta Caves
+1003|Sun-Kissed Goa Beach & Heritage Escape|2026-12-02|20261202|Goa|Goa|4|2|45000.00|38200.00|55.00|Standard|Palolem Beach, Fort Aguada, Dudhsagar Falls, and Fontainhas Latin Quarter
+1004|Royal Pink City Forts & Palaces|2026-12-08|20261208|Jaipur|Jaipur|3|2|32000.00|24800.00|42.00|Standard|Amber Palace, Hawa Mahal, City Palace, Nahargarh Fort, and Jantar Mantar
+1005|Imperial Delhi Monuments & Street Food|2026-12-15|20261215|Delhi|Delhi|3|2|28000.00|22100.00|50.00|Standard|Red Fort, Qutub Minar, Humayun's Tomb, India Gate, and Chandni Chowk
+1006|Pearls, Palaces & Dum Biryani Odyssey|2026-12-22|20261222|Hyderabad|Hyderabad|3|2|30000.00|23500.00|45.00|Standard|Charminar, Golconda Fort sound show, Hussain Sagar Lake, and Paradise Biryani
+1007|Garden City & Palaces Getaway|2026-12-28|20261228|Bengaluru|Bengaluru|3|2|32000.00|25600.00|40.00|Standard|Lalbagh Glasshouse, Bangalore Palace, Cubbon Park, and VV Puram Food Walk
+1008|Romantic City of Lakes & Royal Haveli|2027-01-05|20270105|Udaipur|Udaipur|4|2|55000.00|44800.00|38.00|Luxury|City Palace Udaipur, Lake Pichola sunset cruise, Saheliyon-ki-Bari, and Bagore Ki Haveli
+1009|Mughal Architectural Wonders & Taj Sunset|2027-01-12|20270112|Agra|Agra|2|2|22000.00|16400.00|28.00|Standard|Taj Mahal at sunrise, Agra Fort, Fatehpur Sikri, and Mehtab Bagh garden
+1010|Sacred Golden Temple & Wagah Retreat|2027-01-18|20270118|Amritsar|Amritsar|2|2|20000.00|15200.00|32.00|Standard|Harmandir Sahib Golden Temple, Wagah Border retreat, Jallianwala Bagh, and Kulcha trail

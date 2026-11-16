@@ -88,7 +88,7 @@ static void apiGetAttractions(const MasterData* data) {
         printf(",\"ticketCost\":%.2f,\"avgVisitTimeMin\":%d,\"openTime\":%d,\"closeTime\":%d,\"rating\":%.1f,\"description\":",
                a->ticketCost, a->avgVisitTimeMin, a->openTime, a->closeTime, a->rating);
         printJsonString(a->description);
-        printf("}");
+        printf(",\"latitude\":%.6f,\"longitude\":%.6f}", a->latitude, a->longitude);
     }
     printf("]}\n");
 }
@@ -246,14 +246,16 @@ static void apiCalculateBudget(const MasterData* data,
     printf("]}\n");
 }
 
-static void apiSearchAttractions(const MasterData* data, const HashTable* ht, const char* query, const char* category) {
+static void apiSearchAttractions(const MasterData* data, const HashTable* ht, const char* query, const char* category, const char* city) {
     int resultIds[MAX_SEARCH_RESULTS];
-    int count = searchAttractions(ht, data, query, category, resultIds, MAX_SEARCH_RESULTS);
+    int count = searchAttractions(ht, data, query, category, city, resultIds, MAX_SEARCH_RESULTS);
 
     printf("{\"success\":true,\"query\":");
     printJsonString(query ? query : "");
     printf(",\"category\":");
     printJsonString(category ? category : "");
+    printf(",\"city\":");
+    printJsonString(city ? city : "");
     printf(",\"count\":%d,\"results\":[", count);
 
     for (int i = 0; i < count; i++) {
@@ -270,7 +272,7 @@ static void apiSearchAttractions(const MasterData* data, const HashTable* ht, co
         printf(",\"ticketCost\":%.2f,\"avgVisitTimeMin\":%d,\"openTime\":%d,\"closeTime\":%d,\"rating\":%.1f,\"description\":",
                a->ticketCost, a->avgVisitTimeMin, a->openTime, a->closeTime, a->rating);
         printJsonString(a->description);
-        printf("}");
+        printf(",\"latitude\":%.6f,\"longitude\":%.6f}", a->latitude, a->longitude);
     }
     printf("]}\n");
 }
@@ -526,6 +528,7 @@ static void apiFullTripPlan(const MasterData* data,
                day->dayNumber, day->dayStartTime, day->dayEndTime, day->totalActiveMinutes, day->totalTicketCost, day->itemCount);
         for (int k = 0; k < day->itemCount; k++) {
             const ScheduledItem* it = &day->items[k];
+            const Attraction* a = findAttractionById(data, it->attractionId);
             if (k > 0) printf(",");
             printf("{\"attractionId\":%d,\"name\":", it->attractionId);
             printJsonString(it->name);
@@ -534,7 +537,7 @@ static void apiFullTripPlan(const MasterData* data,
             printf(",\"arrivalTime\":%d,\"visitStartTime\":%d,\"visitEndTime\":%d,\"visitDurationMin\":%d,\"ticketCost\":%.2f,\"timingNote\":",
                    it->arrivalTime, it->visitStartTime, it->visitEndTime, it->visitDurationMin, it->ticketCost);
             printJsonString(it->timingNote);
-            printf("}");
+            printf(",\"latitude\":%.6f,\"longitude\":%.6f}", a ? a->latitude : 0.0, a ? a->longitude : 0.0);
         }
         printf("]}");
     }
@@ -635,7 +638,7 @@ static void runUnitTests(const MasterData* data, const HashTable* ht) {
     /* TEST 5: Attraction Search */
     printf("[Test 5/6] Attraction Search for 'Shaniwar'... ");
     int searchRes[10];
-    int sCount = searchAttractions(ht, data, "Shaniwar", "All", searchRes, 10);
+    int sCount = searchAttractions(ht, data, "Shaniwar", "All", "All", searchRes, 10);
     if (sCount >= 1) {
         const Attraction* matched = findAttractionById(data, searchRes[0]);
         printf("PASSED (Found: %s)\n", matched ? matched->name : "Unknown");
@@ -758,7 +761,7 @@ static void runInteractiveCli(MasterData* data, HashTable* ht) {
                 printf("Enter search term (e.g. Fort, Palace, Lake, Temple, Wada): ");
                 scanf("%63s", q);
                 int results[20];
-                int count = searchAttractions(ht, data, q, "All", results, 20);
+                int count = searchAttractions(ht, data, q, "All", "All", results, 20);
                 printf("\nFound %d matches for '%s':\n", count, q);
                 for (int i = 0; i < count; i++) {
                     const Attraction* a = findAttractionById(data, results[i]);
@@ -849,7 +852,8 @@ int main(int argc, char* argv[]) {
         } else if (strcmp(cmd, "search_attractions") == 0) {
             const char* query = (argc >= 4 && strcmp(argv[3], "_EMPTY_") != 0) ? argv[3] : "";
             const char* cat = (argc >= 5 && strcmp(argv[4], "_EMPTY_") != 0) ? argv[4] : "All";
-            apiSearchAttractions(&data, ht, query, cat);
+            const char* city = (argc >= 6 && strcmp(argv[5], "_EMPTY_") != 0) ? argv[5] : "All";
+            apiSearchAttractions(&data, ht, query, cat, city);
         } else if (strcmp(cmd, "full_trip_plan") == 0) {
             /* Support both:
                full_trip_plan <destId> <days> <travellers> <budget> <travelStyle> <hotelId> [attrCsv]

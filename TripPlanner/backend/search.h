@@ -33,11 +33,12 @@ unsigned int hashFunction(const char* str);
 void insertHashEntry(HashTable* ht, const char* key, int attractionId);
 void buildAttractionSearchIndex(HashTable* ht, const MasterData* data);
 int searchAttractions(const HashTable* ht,
-                       const MasterData* data,
-                       const char* query,
-                       const char* categoryFilter,
-                       int* resultIds,
-                       int maxResults);
+                      const MasterData* data,
+                      const char* query,
+                      const char* categoryFilter,
+                      const char* cityFilter,
+                      int* resultIds,
+                      int maxResults);
 
 #endif /* SEARCH_H */
 

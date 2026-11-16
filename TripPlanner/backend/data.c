@@ -111,186 +111,151 @@ void initMasterData(MasterData* data) {
        Prices in Indian Rupees (INR ₹)
        ------------------------------------------------------------- */
     Attraction attrs[] = {
-        /* PUNE (id 13) - 14 Realistic Attractions */
-        { 1,  13, "Shaniwar Wada",               "Historical", 50.0,  90,  800, 1830, 4.6, "18th-century grand seat of the Peshwas of Maratha Empire with majestic Delhi Gate" },
-        { 2,  13, "Aga Khan Palace",              "Historical", 100.0, 90,  900, 1730, 4.7, "National landmark of Italian arches and serene lawns where Mahatma Gandhi was interned" },
-        { 3,  13, "Sinhagad Fort",                "Adventure",  50.0, 180,  600, 1800, 4.9, "Historic cliff fortress perched high in Sahyadri mountains with views and famous kanda bhaji" },
-        { 4,  13, "Dagdusheth Ganpati Temple",    "Religious",   0.0,  60,  600, 2230, 5.0, "Celebrated Hindu temple housing the revered golden deity blessed by millions of pilgrims" },
-        { 5,  13, "Raja Dinkar Kelkar Museum",    "Cultural",   100.0, 120, 1000, 1730, 4.6, "Collection of 20,000+ rare Indian medieval sculptures, musical instruments and royal craft" },
-        { 6,  13, "Pataleshwar Cave Temple",      "Historical",  0.0,  45,  830, 1730, 4.5, "8th-century rock-cut basalt cave temple dedicated to Lord Shiva in heart of Pune" },
-        { 7,  13, "Saras Baug & Peshwa Lake",     "Nature",      0.0,  60,  600, 2100, 4.4, "Lush landscaped gardens with central lotus pond, jogging tracks and evening fountain shows" },
-        { 8,  13, "Osho Teerth Park",             "Nature",     100.0, 90,  600, 1800, 4.6, "Zen-styled public sanctuary with Japanese stone pathways, bamboo groves and tranquil streams" },
-        { 9,  13, "Vetal Tekdi Sunset Peak",      "Nature",      0.0,  90,  530, 1930, 4.8, "Pune's highest hilltop ridge offering panoramic city skyline views and nature trails" },
-        { 10, 13, "Khadakwasla Dam & Chowpatty",  "Nature",      0.0,  90,  700, 1900, 4.5, "Popular scenic reservoir for lake breeze, fresh roasted corn, and water panorama" },
-        { 11, 13, "Rajiv Gandhi Zoological Park", "Nature",      80.0, 150, 930, 1730, 4.4, "130-acre wildlife reserve featuring leopard enclosures, white tigers and snake rescue park" },
-        { 12, 13, "FC Road & Vaishali Food Trail","Food",       350.0, 90,  700, 2300, 4.9, "Legendary student hub for sabudana vada, SPDP, bun maska and south Indian filter coffee" },
-        { 13, 13, "Koregaon Park Cafe Walk",      "Food",       600.0, 120, 1100, 2330, 4.8, "Chic tree-lined boulevard lined with artisanal bakeries, global bistros and indie cafes" },
-        { 14, 13, "Parvati Hill Temple Complex",  "Religious",   0.0,  90,  500, 2000, 4.7, "Ancient Peshwa shrine atop 103 stone stairs offering cool morning breezes and history museum" },
-
-        /* DELHI (id 0) */
-        { 15, 0, "Red Fort Citadel",              "Historical", 80.0, 120, 930, 1730, 4.6, "Mughal imperial citadel of red sandstone built by Emperor Shah Jahan" },
-        { 16, 0, "Qutub Minar",                   "Historical", 80.0,  90, 700, 1900, 4.7, "73-meter soaring Afghan-style victory tower with intricate Islamic carvings" },
-        { 17, 0, "Humayun's Tomb",                "Historical", 80.0,  90, 600, 1800, 4.8, "UNESCO Persian garden tomb masterpiece that inspired the Taj Mahal design" },
-        { 18, 0, "India Gate & Kartavya Path",    "Cultural",    0.0,  60, 600, 2200, 4.7, "Grand national memorial boulevard illuminated with evening water fountains" },
-        { 19, 0, "Chandni Chowk Street Food",     "Food",       400.0, 120, 1000, 2100, 4.9, "Legendary Old Delhi food lanes with stuffed parathas, jalebis and spicy chaat" },
-        { 20, 0, "Akshardham Temple",             "Cultural",    0.0, 180, 930, 1830, 4.9, "Stunning pink sandstone Hindu spiritual complex with boat ride and musical fountain" },
-        { 21, 0, "Lotus Temple",                  "Religious",   0.0,  60, 900, 1730, 4.6, "Marble lotus petal Bahai sanctuary open to contemplation of all faiths" },
-
-        /* AGRA (id 1) */
-        { 22, 1, "Taj Mahal",                     "Historical", 250.0, 180, 600, 1830, 5.0, "The world's greatest monument to love in pure white Makrana marble" },
-        { 23, 1, "Agra Fort",                     "Historical", 120.0, 120, 600, 1800, 4.6, "Sprawling walled fortress of Mughal rulers overlooking the Yamuna River" },
-        { 24, 1, "Fatehpur Sikri Royal Ruins",    "Historical", 100.0, 150, 700, 1800, 4.5, "Akbar's deserted red sandstone royal capital and soaring Buland Darwaza" },
-        { 25, 1, "Mehtab Bagh Sunset Garden",     "Nature",      50.0,  60, 600, 1900, 4.5, "Charbagh river park providing picturesque sunset views of the Taj Mahal" },
-        { 26, 1, "Sadar Bazaar Petha Trail",      "Food",       250.0,  60, 1000, 2200, 4.4, "Heritage confection lanes famous for authentic Agra petha and dalmoth" },
-
-        /* JAIPUR (id 2) */
-        { 27, 2, "Amber Palace & Fort",           "Historical", 200.0, 180, 800, 1730, 4.8, "Hilltop royal fortress renowned for mirror mosaics of Sheesh Mahal" },
-        { 28, 2, "Hawa Mahal",                    "Cultural",   100.0,  60, 900, 1700, 4.6, "Palace of Winds with 953 honeycombed carved lattice pink sandstone windows" },
-        { 29, 2, "City Palace Jaipur",            "Cultural",   250.0, 120, 930, 1700, 4.7, "Regal living palace museum showcasing royal textiles, armory and courtyards" },
-        { 30, 2, "Jantar Mantar Observatory",     "Historical",  80.0,  75, 900, 1630, 4.6, "UNESCO collection of 19 architectural astronomical instruments and sundial" },
-        { 31, 2, "Nahargarh Fort Sunset Point",   "Adventure",  100.0, 120, 900, 1900, 4.8, "Cliffside fortress ramparts with aerial evening panorama over Jaipur city" },
-        { 32, 2, "Chokhi Dhani Ethnic Resort",    "Cultural",   900.0, 180, 1700, 2300, 4.7, "Traditional Rajasthani village fair with folk dancers, camel rides and thali" },
-
-        /* UDAIPUR (id 3) */
-        { 33, 3, "City Palace Udaipur",           "Cultural",   300.0, 150, 900, 1730, 4.8, "Magnificent granite and marble palace complex overlooking Lake Pichola" },
-        { 34, 3, "Lake Pichola Boat Cruise",      "Nature",     400.0,  75, 900, 1800, 4.9, "Sunset boat cruise offering close views of Jag Mandir and Lake Palace" },
-        { 35, 3, "Saheliyon-ki-Bari",             "Nature",      50.0,  60, 900, 1900, 4.4, "Historic garden of fountains, marble pavilions and lotus ponds" },
-        { 36, 3, "Bagore Ki Haveli Folk Show",    "Cultural",   150.0,  75, 1900, 2030, 4.8, "Lakeside evening Rajasthani folk dances and puppet artistry" },
-        { 37, 3, "Monsoon Palace Sajjangarh",     "Nature",     120.0,  90, 900, 1800, 4.6, "Hilltop palace built to track monsoon clouds across the Aravalli range" },
-
-        /* JODHPUR (id 4) */
-        { 38, 4, "Mehrangarh Citadel",            "Historical", 200.0, 180, 900, 1700, 4.9, "Colossal cliffside fortress towering 400 feet above the indigo Blue City" },
-        { 39, 4, "Jaswant Thada Cenotaph",        "Cultural",    50.0,  60, 900, 1700, 4.6, "Intricately carved translucent marble memorial by a quiet lake" },
-        { 40, 4, "Umaid Bhawan Palace",           "Cultural",   100.0,  90, 900, 1700, 4.6, "One of the world's largest private residences with Art Deco royal museum" },
-        { 41, 4, "Mandore Gardens",               "Historical",  50.0,  90, 800, 1800, 4.4, "Ancient royal cenotaphs and rock terraces of Marwar rulers" },
-
-        /* VARANASI (id 5) */
-        { 42, 5, "Dashashwamedh Ghat Ganga Aarti", "Religious",  0.0, 120, 500, 2100, 5.0, "Mesmerizing evening brass lamp ritual on the sacred river steps" },
-        { 43, 5, "Kashi Vishwanath Corridor",    "Religious",   0.0,  90, 400, 2200, 4.9, "Revered Jyotirlinga temple connecting directly to the holy Ganges" },
-        { 44, 5, "Sarnath Buddhist Deer Park",    "Historical", 100.0, 120, 800, 1700, 4.7, "Sacred site where Lord Buddha preached his first sermon after enlightenment" },
-        { 45, 5, "Sunrise Boat Ride on Ganges",   "Nature",     300.0,  90, 530, 800, 4.9, "Peaceful morning rowing boat through misty heritage ghats of Varanasi" },
-
-        /* MUMBAI (id 6) */
-        { 46, 6, "Gateway of India",              "Historical",  0.0,  60, 600, 2300, 4.7, "Iconic seaside basalt triumphal arch facing the Arabian Sea" },
-        { 47, 6, "Marine Drive Queen's Necklace", "Nature",      0.0,  90, 600, 2359, 4.8, "Sweeping coastal promenade celebrated for evening breezes and sunset skyline" },
-        { 48, 6, "Elephanta Caves UNESCO",        "Historical", 260.0, 210, 900, 1700, 4.6, "Rock-cut cave temples dedicated to Shiva on an island reached by harbour ferry" },
-        { 49, 6, "Chhatrapati Shivaji Terminus",  "Cultural",    0.0,  45, 600, 2200, 4.7, "Victorian Gothic UNESCO railway headquarters with gargoyles and stained glass" },
-        { 50, 6, "Bandra Bandstand & Fort",       "Nature",      0.0,  75, 600, 2100, 4.6, "Rocky seashore walkway beside Portuguese fort and Bollywood star residences" },
-        { 51, 6, "Juhu Chowpatty Beach Food",     "Food",       300.0,  90, 1600, 2359, 4.7, "Lively beach fair with pav bhaji, bhel puri, kulfi and sea waves" },
-
-        /* GOA (id 7) */
-        { 52, 7, "Basilica of Bom Jesus",         "Religious",   50.0,  60, 900, 1730, 4.7, "16th-century UNESCO Baroque church holding mortal remains of St. Francis Xavier" },
-        { 53, 7, "Palolem Beach Crescent",        "Nature",      0.0, 180, 600, 2200, 4.8, "Idyllic crescent white-sand bay lined with coconut palms and beach huts" },
-        { 54, 7, "Dudhsagar Waterfalls Trek",     "Adventure",  500.0, 240, 800, 1600, 4.8, "Towering 4-tiered milk-white cascade deep within the Western Ghats jungle" },
-        { 55, 7, "Fort Aguada & Lighthouse",      "Historical",  50.0,  90, 900, 1800, 4.6, "17th-century Portuguese fortress overlooking Sinquerim beach and Arabian Sea" },
-        { 56, 7, "Fontainhas Latin Quarter",      "Cultural",    0.0,  90, 800, 1900, 4.8, "Colourful Portuguese heritage lanes with azulejos tiles and indie cafes" },
-        { 57, 7, "Anjuna Flea Market & Sunset",   "Cultural",    0.0, 120, 1000, 2000, 4.6, "Bohemian beachside shopping for handmade jewelry, crafts and live music" },
-
-        /* MANALI (id 8) */
-        { 58, 8, "Solang Valley Snow Sports",     "Adventure",  600.0, 210, 830, 1700, 4.8, "Premier adventure hub for paragliding, zorbing and winter skiing" },
-        { 59, 8, "Hadimba Temple Forest Shrine",  "Religious",   30.0,  60, 800, 1800, 4.6, "Ancient multi-tiered wooden pagoda surrounded by towering cedar trees" },
-        { 60, 8, "Rohtang Pass High Altitude",    "Adventure", 1000.0, 300, 700, 1600, 4.9, "Glacial pass at 13,058 ft offering breathtaking snow peaks" },
-        { 61, 8, "Old Manali Riverside Cafes",    "Food",       450.0, 120, 900, 2200, 4.7, "Bohemian apple orchard village with trout fish dining and live acoustic music" },
-
-        /* SHIMLA (id 9) */
-        { 62, 9, "The Ridge & Mall Road",         "Cultural",    0.0, 120, 800, 2200, 4.7, "Pedestrian boulevard overlooking snow peaks with colonial Christ Church" },
-        { 63, 9, "Jakhoo Hill & Temple Ropeway",  "Religious",  250.0,  90, 800, 1800, 4.6, "Highest hill peak with giant Lord Hanuman statue and cable car ride" },
-        { 64, 9, "Kalka-Shimla Toy Train",        "Historical", 150.0, 180, 800, 1600, 4.8, "UNESCO heritage narrow-gauge rail journey traversing 102 mountain tunnels" },
-        { 65, 9, "Kufri Snow Viewpoint",          "Adventure",  300.0, 120, 900, 1700, 4.5, "Popular hill outpost for horse riding, yak photography and snow slopes" },
-
-        /* AMRITSAR (id 10) */
-        { 66, 10, "Golden Temple (Harmandir Sahib)", "Religious", 0.0, 180, 400, 2300, 5.0, "Most sacred Sikh shrine plated with pure gold surrounded by holy Amrit Sarovar" },
-        { 67, 10, "Wagah Border Beating Retreat",   "Cultural",   0.0, 120, 1500, 1830, 4.9, "Electrifying daily military ceremony at the India-Pakistan border gate" },
-        { 68, 10, "Jallianwala Bagh Memorial",      "Historical",  0.0,  60, 630, 1930, 4.7, "Somber national historical garden commemorating the 1919 independence movement" },
-        { 69, 10, "Amritsari Kulcha Food Trail",    "Food",      250.0,  60, 800, 1600, 4.9, "Clay oven baked crisp kulchas served with spiced chole and homemade butter" },
-
-        /* RISHIKESH (id 11) */
-        { 70, 11, "Ganga White Water Rafting",      "Adventure", 650.0, 180, 800, 1600, 4.9, "Exhilarating Class III & IV rapids along the scenic Himalayan Ganges river" },
-        { 71, 11, "Triveni Ghat Evening Aarti",      "Religious",   0.0,  75, 1700, 2000, 4.9, "Sacred convergence ghat with chanting priests and floating brass leaf lamps" },
-        { 72, 11, "Beatles Ashram (Chaurasi Kutia)", "Cultural",  150.0,  90, 900, 1630, 4.7, "Forest ashram where The Beatles composed the White Album, featuring murals" },
-        { 73, 11, "Ram Jhula & Laxman Jhula",       "Cultural",    0.0,  60, 600, 2200, 4.6, "Iconic suspension bridges spanning the turquoise Ganges with mountain views" },
-
-        /* BENGALURU (id 14) */
-        { 74, 14, "Lalbagh Botanical Garden",       "Nature",      50.0, 120, 600, 1900, 4.7, "240-acre botanical haven with century-old trees and Victorian glasshouse" },
-        { 75, 14, "Bangalore Palace",               "Historical", 250.0, 120, 1000, 1730, 4.5, "Tudor-style royal estate with fortified towers, wood carvings and gardens" },
-        { 76, 14, "Cubbon Park & Vidhana Soudha",   "Nature",       0.0,  90, 600, 1900, 4.7, "Sprawling green heart of Bengaluru facing the Neo-Dravidian statehouse" },
-        { 77, 14, "VV Puram Food Street",           "Food",       300.0,  90, 1730, 2300, 4.8, "Sensory vegetarian street food trail with dosas, obbattu and rose gulkand" },
-
-        /* HYDERABAD (id 15) */
-        { 78, 15, "Charminar & Laad Bazaar",        "Historical",  35.0,  90, 930, 1730, 4.7, "16th-century landmark with 4 grand minarets flanked by lacquer bangle lanes" },
-        { 79, 15, "Golconda Fort & Light Show",     "Historical",  80.0, 150, 900, 1730, 4.8, "Acoustic medieval diamond citadel where the Koh-i-Noor diamond was kept" },
-        { 80, 15, "Hussain Sagar Lake & Buddha",    "Nature",      50.0,  75, 800, 2100, 4.6, "Heart-shaped lake featuring world's tallest monolithic standing Buddha" },
-        { 81, 15, "Paradise Hyderabadi Biryani",    "Food",       450.0,  75, 1100, 2300, 4.9, "World-famed Dum Biryani cooked with fragrant basmati and saffron spices" },
-
-        /* KOCHI (id 16) */
-        { 82, 16, "Chinese Fishing Nets Fort Kochi","Cultural",    0.0,  60, 600, 2100, 4.7, "Historic cantilevered shore nets silhouetted against Arabian Sea sunsets" },
-        { 83, 16, "Mattancherry Dutch Palace",      "Historical",  25.0,  75, 945, 1700, 4.5, "16th-century Portuguese palace featuring exquisite Hindu mythological murals" },
-        { 84, 16, "Jew Town & Paradesi Synagogue",  "Cultural",    20.0,  60, 1000, 1700, 4.6, "Antique shops and 1568 synagogue with hand-painted Chinese porcelain tiles" },
-        { 85, 16, "Kerala Backwaters Day Cruise",   "Nature",     800.0, 210, 830, 1700, 4.9, "Serene canal voyage on traditional kettuvallam through palm backwaters" },
-
-        /* KOLKATA (id 17) */
-        { 86, 17, "Victoria Memorial Hall",         "Historical",  50.0, 120, 1000, 1700, 4.8, "Monumental white Makrana marble palace surrounded by 64 acres of gardens" },
-        { 87, 17, "Howrah Bridge & Hooghly Walk",   "Cultural",    0.0,  60, 500, 2300, 4.8, "Cantilevered engineering marvel spanning the busy waters of Hooghly River" },
-        { 88, 17, "Dakshineswar Kali Temple",       "Religious",   0.0,  90, 600, 2030, 4.9, "19th-century navaratna temple where mystic Ramakrishna Paramahamsa served" },
-        { 89, 17, "Park Street Dining & Sweets",    "Food",       400.0,  90, 1100, 2300, 4.9, "Iconic colonial dining avenue with kathi rolls, chelo kababs and rasgullas" },
-
-        /* PORT BLAIR & ANDAMANS (id 12) */
-        { 90, 12, "Cellular Jail National Memorial", "Historical", 50.0, 120, 900, 1700, 4.9, "Historic colonial prison complex renowned for its poignant evening light and sound show" },
-        { 91, 12, "Radhanagar Beach Havelock",       "Nature",      0.0, 180, 600, 1830, 4.9, "Acclaimed as one of Asia's most pristine white-sand beaches with turquoise lagoon waters" },
-        { 92, 12, "Ross Island British Ruins",       "Historical", 100.0, 120, 830, 1630, 4.7, "Old British administrative headquarters overtaken by giant banyan tree roots and deer" },
-        { 93, 12, "Elephant Beach Coral Reef",       "Adventure",  750.0, 180, 800, 1600, 4.8, "Vibrant coral reef hub renowned for sea walking, glass-bottom boats and snorkeling" },
-
-        /* BENGALURU EXPANDED (id 14) */
-        { 94, 14, "Bannerghatta Biological Park",    "Nature",     350.0, 210, 930, 1700, 4.6, "Sprawling safari sanctuary with tigers, lions, butterfly conservatory and rescue center" },
-        { 95, 14, "Nandi Hills Sunrise Point",       "Adventure",   50.0, 180, 600, 1800, 4.7, "Ancient hill fortress shrouded in mist, offering spectacular golden sunrise panoramas" },
-        { 96, 14, "Tipu Sultan's Summer Palace",     "Historical",  50.0,  60, 830, 1730, 4.4, "Ornate teakwood palace with fluted pillars, frescoes and historical Anglo-Mysore exhibits" },
-
-        /* HYDERABAD EXPANDED (id 15) */
-        { 97, 15, "Salar Jung Museum",               "Cultural",   100.0, 180, 1000, 1700, 4.8, "One of the world's largest one-man collections featuring the Veiled Rebecca and musical clock" },
-        { 98, 15, "Qutb Shahi Tombs",                "Historical",  50.0,  90, 930, 1730, 4.7, "Majestic domed royal mausoleums set in landscaped heritage gardens of Ibrahim Bagh" },
-        { 99, 15, "Ramoji Film City",                "Adventure", 1350.0, 360, 900, 1730, 4.6, "World's largest film studio complex featuring themed movie sets, stunt shows and eco tour" },
-
-        /* KOCHI EXPANDED (id 16) */
-        { 100, 16, "Fort Kochi Beach & Promenade",   "Nature",       0.0,  90, 600, 2200, 4.6, "Historic seaside promenade with heritage trees, sunset viewpoints and maritime history" },
-        { 101, 16, "Kerala Kathakali Centre",        "Cultural",   400.0,  90, 1700, 2000, 4.9, "Classical dance theatre showcasing elaborate makeup rituals, mudras and Kathakali recitals" },
-        { 102, 16, "Hill Palace Museum Tripunithura","Historical",  50.0, 120, 900, 1630, 4.5, "Largest archaeological palace museum in Kerala with royal crown, carriage and deer park" },
-
-        /* KOLKATA EXPANDED (id 17) */
-        { 103, 17, "Indian Museum Kolkata",          "Cultural",    75.0, 150, 1000, 1700, 4.7, "Ninth oldest museum in the world with rare Egyptian mummies, fossils and Mughal art" },
-        { 104, 17, "Princep Ghat & River Cruise",    "Nature",     150.0,  90, 600, 2200, 4.8, "Grecian monument along Hooghly River offering traditional wooden boat sunset rides" },
-        { 105, 17, "College Street Book Alley",      "Cultural",   200.0,  90, 1000, 2030, 4.9, "World's largest secondhand book market surrounding the legendary Indian Coffee House" },
-
-        /* PUNE EXPANDED (id 13) */
-        { 106, 13, "Lonavala & Karla Buddhist Caves","Historical",  60.0, 180, 830, 1700, 4.7, "Ancient 2nd-century BC rock-cut chaitya hall with vaulted ceiling and grand carved pillars" },
-        { 107, 13, "National Defence Academy Khadakwasla","Cultural", 0.0, 90, 900, 1600, 4.8, "Premier joint military training academy nestled in picturesque Sahyadri foothills" },
-
-        /* MUMBAI EXPANDED (id 6) */
-        { 108, 6, "Sanjay Gandhi National Park & Caves","Nature",   90.0, 210, 730, 1730, 4.6, "Dense protected urban forest housing 109 rock-cut Buddhist caves dating from 1st century BC" },
-        { 109, 6, "Haji Ali Dargah Coastal Shrine",  "Religious",    0.0,  60, 600, 2200, 4.7, "Revered 15th-century Indo-Islamic mosque located on an offshore islet in Arabian Sea" },
-
-        /* GOA EXPANDED (id 7) */
-        { 110, 7, "Sahakari Spice Farm Ponda",       "Nature",     500.0, 120, 900, 1630, 4.7, "Lush organic plantation tour featuring vanilla, cinnamon, cardamom and Goan buffet" },
-        { 111, 7, "Chapora Fort Sunset",             "Historical",   0.0,  90, 800, 1900, 4.6, "Iconic hilltop fortification made famous in pop culture with views over Vagator beach" },
-
-        /* DELHI EXPANDED (id 0) */
-        { 112, 0, "Lodhi Art District & Gardens",    "Cultural",     0.0,  90, 600, 2000, 4.7, "Open-air street art murals alongside heritage 15th-century Sayyid and Lodhi tombs" },
-        { 113, 0, "Dilli Haat Crafts & Cuisines",    "Cultural",    50.0, 120, 1030, 2200, 4.7, "Bustling open-air crafts bazaar with artisan stalls and culinary treats from every state" },
-
-        /* JAIPUR EXPANDED (id 2) */
-        { 114, 2, "Jaigarh Fort & Jaivana Cannon",   "Historical", 150.0, 120, 900, 1700, 4.6, "Rugged hilltop fortress connected to Amber Fort housing the world's largest wheeled cannon" },
-        { 115, 2, "Galta Ji Monkey Temple",          "Religious",    0.0,  90, 600, 1900, 4.5, "Ancient Hindu pilgrimage complex with sacred natural water tanks set in a mountain pass" },
-
-        /* UDAIPUR EXPANDED (id 3) */
-        { 116, 3, "Fateh Sagar Lake & Nehru Park",   "Nature",     150.0,  90, 800, 2100, 4.7, "Artificial freshwater lake featuring an island garden park accessible by boat" },
-        { 117, 3, "Jagdish Temple Old City",         "Religious",    0.0,  60, 530, 2200, 4.8, "Striking 1651 Indo-Aryan temple with towering carved shikhara in heart of old Udaipur" },
-
-        /* RISHIKESH EXPANDED (id 11) */
-        { 118, 11, "Neelkanth Mahadev Temple",       "Religious",    0.0, 120, 600, 1900, 4.7, "Revered Shiva shrine nestled in dense mountain valleys at 4,360 ft" },
-        { 119, 11, "Kunjapuri Devi Sunrise Trek",    "Adventure",  200.0, 150, 500, 1100, 4.9, "Panoramic vantage point offering views of high Himalayan peaks like Swargarohini" },
-
-        /* AMRITSAR EXPANDED (id 10) */
-        { 120, 10, "Partition Museum Town Hall",     "Cultural",    20.0, 120, 1000, 1800, 4.8, "World's first museum dedicated to the poignant stories and artifacts of the 1947 partition" },
-        { 121, 10, "Gobindgarh Fort & Live Shows",   "Historical", 180.0, 150, 1000, 2200, 4.6, "18th-century military fort holding the Toshakhana treasury and evening light spectacles" }
+        { 1, 13, "Shaniwar Wada", "Historical", 50.0, 90, 800, 1830, 4.6, "18th-century grand seat of the Peshwas of Maratha Empire with majestic Delhi Gate", 18.519500, 73.855300 },
+        { 2, 13, "Aga Khan Palace", "Historical", 100.0, 90, 900, 1730, 4.7, "National landmark of Italian arches and serene lawns where Mahatma Gandhi was interned", 18.552400, 73.901500 },
+        { 3, 13, "Sinhagad Fort", "Adventure", 50.0, 180, 600, 1800, 4.9, "Historic cliff fortress perched high in Sahyadri mountains with views and famous kanda bhaji", 18.366300, 73.755800 },
+        { 4, 13, "Dagdusheth Ganpati Temple", "Religious", 0.0, 60, 600, 2230, 5.0, "Celebrated Hindu temple housing the revered golden deity blessed by millions of pilgrims", 18.516400, 73.856100 },
+        { 5, 13, "Raja Dinkar Kelkar Museum", "Cultural", 100.0, 120, 1000, 1730, 4.6, "Collection of 20,000+ rare Indian medieval sculptures, musical instruments and royal craft", 18.510900, 73.854200 },
+        { 6, 13, "Pataleshwar Cave Temple", "Historical", 0.0, 45, 830, 1730, 4.5, "8th-century rock-cut basalt cave temple dedicated to Lord Shiva in heart of Pune", 18.528400, 73.850400 },
+        { 7, 13, "Saras Baug & Peshwa Lake", "Nature", 0.0, 60, 600, 2100, 4.4, "Lush landscaped gardens with central lotus pond, jogging tracks and evening fountain shows", 18.500900, 73.853200 },
+        { 8, 13, "Osho Teerth Park", "Nature", 100.0, 90, 600, 1800, 4.6, "Zen-styled public sanctuary with Japanese stone pathways, bamboo groves and tranquil streams", 18.539800, 73.893800 },
+        { 9, 13, "Vetal Tekdi Sunset Peak", "Nature", 0.0, 90, 530, 1930, 4.8, "Pune's highest hilltop ridge offering panoramic city skyline views and nature trails", 18.525500, 73.818900 },
+        { 10, 13, "Khadakwasla Dam & Chowpatty", "Nature", 0.0, 90, 700, 1900, 4.5, "Popular scenic reservoir for lake breeze, fresh roasted corn, and water panorama", 18.441400, 73.763200 },
+        { 11, 13, "Rajiv Gandhi Zoological Park", "Nature", 80.0, 150, 930, 1730, 4.4, "130-acre wildlife reserve featuring leopard enclosures, white tigers and snake rescue park", 18.455100, 73.860100 },
+        { 12, 13, "FC Road & Vaishali Food Trail", "Food", 350.0, 90, 700, 2300, 4.9, "Legendary student hub for sabudana vada, SPDP, bun maska and south Indian filter coffee", 18.525000, 73.841000 },
+        { 13, 13, "Koregaon Park Cafe Walk", "Food", 600.0, 120, 1100, 2330, 4.8, "Chic tree-lined boulevard lined with artisanal bakeries, global bistros and indie cafes", 18.536200, 73.894000 },
+        { 14, 13, "Parvati Hill Temple Complex", "Religious", 0.0, 90, 500, 2000, 4.7, "Ancient Peshwa shrine atop 103 stone stairs offering cool morning breezes and history museum", 18.497500, 73.847500 },
+        { 106, 13, "Lonavala & Karla Buddhist Caves", "Historical", 60.0, 180, 830, 1700, 4.7, "Ancient 2nd-century BC rock-cut chaitya hall with vaulted ceiling and grand carved pillars", 18.782000, 73.470000 },
+        { 107, 13, "National Defence Academy Khadakwasla", "Cultural", 0.0, 90, 900, 1600, 4.8, "Premier joint military training academy nestled in picturesque Sahyadri foothills", 18.472000, 73.774000 },
+        { 122, 13, "Tulshibaug & Laxmi Road Market", "Cultural", 0.0, 90, 1000, 2130, 4.6, "Historic bustling Pune shopping precinct renowned for traditional copperware, sarees and street food", 18.514500, 73.855000 },
+        { 123, 13, "Empress Botanical Garden", "Nature", 20.0, 75, 930, 1800, 4.5, "39-acre colonial botanical garden holding centuries-old tropical trees and rare flowering flora", 18.510000, 73.895000 },
+        { 124, 13, "Peshwe Energy Park & Saras Lake", "Adventure", 30.0, 90, 900, 1830, 4.4, "Interactive science and eco park featuring renewable energy exhibits, boating and rope bridges", 18.499000, 73.851000 },
+        { 125, 13, "Bund Garden & Mula-Mutha River Walk", "Nature", 0.0, 60, 600, 2000, 4.3, "Scenic riverfront garden built by Sir Jamshedji Jeejeebhoy, famous for evening strolls and migratory birds", 18.535000, 73.882000 },
+        { 15, 0, "Red Fort Citadel", "Historical", 80.0, 120, 930, 1730, 4.6, "Mughal imperial citadel of red sandstone built by Emperor Shah Jahan", 28.656200, 77.241000 },
+        { 16, 0, "Qutub Minar", "Historical", 80.0, 90, 700, 1900, 4.7, "73-meter soaring Afghan-style victory tower with intricate Islamic carvings", 28.524400, 77.185500 },
+        { 17, 0, "Humayun's Tomb", "Historical", 80.0, 90, 600, 1800, 4.8, "UNESCO Persian garden tomb masterpiece that inspired the Taj Mahal design", 28.593300, 77.250700 },
+        { 18, 0, "India Gate & Kartavya Path", "Cultural", 0.0, 60, 600, 2200, 4.7, "Grand national memorial boulevard illuminated with evening water fountains", 28.612900, 77.229500 },
+        { 19, 0, "Chandni Chowk Street Food", "Food", 400.0, 120, 1000, 2100, 4.9, "Legendary Old Delhi food lanes with stuffed parathas, jalebis and spicy chaat", 28.650600, 77.230300 },
+        { 20, 0, "Akshardham Temple", "Cultural", 0.0, 180, 930, 1830, 4.9, "Stunning pink sandstone Hindu spiritual complex with boat ride and musical fountain", 28.612700, 77.277300 },
+        { 21, 0, "Lotus Temple", "Religious", 0.0, 60, 900, 1730, 4.6, "Marble lotus petal Bahai sanctuary open to contemplation of all faiths", 28.553500, 77.258800 },
+        { 112, 0, "Lodhi Art District & Gardens", "Cultural", 0.0, 90, 600, 2000, 4.7, "Open-air street art murals alongside heritage 15th-century Sayyid and Lodhi tombs", 28.588800, 77.225500 },
+        { 113, 0, "Dilli Haat Crafts & Cuisines", "Cultural", 50.0, 120, 1030, 2200, 4.7, "Bustling open-air crafts bazaar with artisan stalls and culinary treats from every state", 28.573200, 77.208400 },
+        { 126, 0, "Jama Masjid & Matia Mahal Food Walk", "Religious", 0.0, 75, 700, 1830, 4.7, "One of India's largest historic mosques flanked by authentic Mughal kebab trails", 28.650700, 77.233400 },
+        { 22, 1, "Taj Mahal", "Historical", 250.0, 180, 600, 1830, 5.0, "The world's greatest monument to love in pure white Makrana marble", 27.175100, 78.042100 },
+        { 23, 1, "Agra Fort", "Historical", 120.0, 120, 600, 1800, 4.6, "Sprawling walled fortress of Mughal rulers overlooking the Yamuna River", 27.179500, 78.021100 },
+        { 24, 1, "Fatehpur Sikri Royal Ruins", "Historical", 100.0, 150, 700, 1800, 4.5, "Akbar's deserted red sandstone royal capital and soaring Buland Darwaza", 27.094500, 77.667900 },
+        { 25, 1, "Mehtab Bagh Sunset Garden", "Nature", 50.0, 60, 600, 1900, 4.5, "Charbagh river park providing picturesque sunset views of the Taj Mahal", 27.179900, 78.046000 },
+        { 26, 1, "Sadar Bazaar Petha Trail", "Food", 250.0, 60, 1000, 2200, 4.4, "Heritage confection lanes famous for authentic Agra petha and dalmoth", 27.160000, 78.006000 },
+        { 127, 1, "Itmad-ud-Daulah (Baby Taj)", "Historical", 70.0, 60, 600, 1800, 4.6, "Exquisite marble jewel-box mausoleum on Yamuna banks that inspired Mughal pietra dura", 27.192900, 78.031000 },
+        { 128, 1, "Akbar's Tomb Sikandra", "Historical", 80.0, 75, 600, 1800, 4.5, "Majestic red sandstone and marble tomb complex set inside lush deer parks", 27.220500, 77.950500 },
+        { 27, 2, "Amber Palace & Fort", "Historical", 200.0, 180, 800, 1730, 4.8, "Hilltop royal fortress renowned for mirror mosaics of Sheesh Mahal", 26.985500, 75.851300 },
+        { 28, 2, "Hawa Mahal", "Cultural", 100.0, 60, 900, 1700, 4.6, "Palace of Winds with 953 honeycombed carved lattice pink sandstone windows", 26.923900, 75.826700 },
+        { 29, 2, "City Palace Jaipur", "Cultural", 250.0, 120, 930, 1700, 4.7, "Regal living palace museum showcasing royal textiles, armory and courtyards", 26.925800, 75.823700 },
+        { 30, 2, "Jantar Mantar Observatory", "Historical", 80.0, 75, 900, 1630, 4.6, "UNESCO collection of 19 architectural astronomical instruments and sundial", 26.924800, 75.824600 },
+        { 31, 2, "Nahargarh Fort Sunset Point", "Adventure", 100.0, 120, 900, 1900, 4.8, "Cliffside fortress ramparts with aerial evening panorama over Jaipur city", 26.937300, 75.815600 },
+        { 32, 2, "Chokhi Dhani Ethnic Resort", "Cultural", 900.0, 180, 1700, 2300, 4.7, "Traditional Rajasthani village fair with folk dancers, camel rides and thali", 26.766300, 75.836100 },
+        { 114, 2, "Jaigarh Fort & Jaivana Cannon", "Historical", 150.0, 120, 900, 1700, 4.6, "Rugged hilltop fortress connected to Amber Fort housing the world's largest wheeled cannon", 26.985000, 75.845000 },
+        { 115, 2, "Galta Ji Monkey Temple", "Religious", 0.0, 90, 600, 1900, 4.5, "Ancient Hindu pilgrimage complex with sacred natural water tanks set in a mountain pass", 26.916000, 75.858000 },
+        { 129, 2, "Jal Mahal Lake Viewpoint", "Nature", 0.0, 45, 600, 2200, 4.6, "Submerged 18th-century water palace floating in Man Sagar Lake surrounded by Aravallis", 26.953400, 75.846200 },
+        { 130, 2, "Albert Hall Museum & Ram Niwas", "Cultural", 50.0, 90, 900, 1700, 4.7, "Indo-Saracenic museum holding an ancient Egyptian mummy, Persian carpets and Rajput miniature paintings", 26.911600, 75.819500 },
+        { 33, 3, "City Palace Udaipur", "Cultural", 300.0, 150, 900, 1730, 4.8, "Magnificent granite and marble palace complex overlooking Lake Pichola", 24.576400, 73.683500 },
+        { 34, 3, "Lake Pichola Boat Cruise", "Nature", 400.0, 75, 900, 1800, 4.9, "Sunset boat cruise offering close views of Jag Mandir and Lake Palace", 24.578700, 73.674100 },
+        { 35, 3, "Saheliyon-ki-Bari", "Nature", 50.0, 60, 900, 1900, 4.4, "Historic garden of fountains, marble pavilions and lotus ponds", 24.605300, 73.684500 },
+        { 36, 3, "Bagore Ki Haveli Folk Show", "Cultural", 150.0, 75, 1900, 2030, 4.8, "Lakeside evening Rajasthani folk dances and puppet artistry", 24.579700, 73.680300 },
+        { 37, 3, "Monsoon Palace Sajjangarh", "Nature", 120.0, 90, 900, 1800, 4.6, "Hilltop palace built to track monsoon clouds across the Aravalli range", 24.596000, 73.637700 },
+        { 116, 3, "Fateh Sagar Lake & Nehru Park", "Nature", 150.0, 90, 800, 2100, 4.7, "Artificial freshwater lake featuring an island garden park accessible by boat", 24.602000, 73.674000 },
+        { 117, 3, "Jagdish Temple Old City", "Religious", 0.0, 60, 530, 2200, 4.8, "Striking 1651 Indo-Aryan temple with towering carved shikhara in heart of old Udaipur", 24.579600, 73.683800 },
+        { 131, 3, "Shilpgram Rural Arts Complex", "Cultural", 70.0, 120, 1100, 1900, 4.6, "Living ethnographic museum showcasing traditional Rajasthani huts, potters, weavers and folk songs", 24.620000, 73.660000 },
+        { 38, 4, "Mehrangarh Citadel", "Historical", 200.0, 180, 900, 1700, 4.9, "Colossal cliffside fortress towering 400 feet above the indigo Blue City", 26.297800, 73.018500 },
+        { 39, 4, "Jaswant Thada Cenotaph", "Cultural", 50.0, 60, 900, 1700, 4.6, "Intricately carved translucent marble memorial by a quiet lake", 26.302500, 73.023200 },
+        { 40, 4, "Umaid Bhawan Palace", "Cultural", 100.0, 90, 900, 1700, 4.6, "One of the world's largest private residences with Art Deco royal museum", 26.280800, 73.047000 },
+        { 41, 4, "Mandore Gardens", "Historical", 50.0, 90, 800, 1800, 4.4, "Ancient royal cenotaphs and rock terraces of Marwar rulers", 26.357100, 73.042400 },
+        { 132, 4, "Clock Tower & Sardar Market", "Food", 200.0, 75, 1000, 2130, 4.6, "Vibrant desert spice bazaar famous for Shahi samosas, mawa kachoris and lassi", 26.295000, 73.025000 },
+        { 42, 5, "Dashashwamedh Ghat Ganga Aarti", "Religious", 0.0, 120, 500, 2100, 5.0, "Mesmerizing evening brass lamp ritual on the sacred river steps", 25.307600, 83.010700 },
+        { 43, 5, "Kashi Vishwanath Corridor", "Religious", 0.0, 90, 400, 2200, 4.9, "Revered Jyotirlinga temple connecting directly to the holy Ganges", 25.310900, 83.010700 },
+        { 44, 5, "Sarnath Buddhist Deer Park", "Historical", 100.0, 120, 800, 1700, 4.7, "Sacred site where Lord Buddha preached his first sermon after enlightenment", 25.381100, 83.021400 },
+        { 45, 5, "Sunrise Boat Ride on Ganges", "Nature", 300.0, 90, 530, 800, 4.9, "Peaceful morning rowing boat through misty heritage ghats of Varanasi", 25.305000, 83.010000 },
+        { 133, 5, "Assi Ghat Evening Classical Music", "Cultural", 0.0, 90, 500, 2200, 4.8, "Southernmost ghat hosting morning Subah-e-Banaras concerts, yoga and chai stalls", 25.289000, 83.007000 },
+        { 46, 6, "Gateway of India", "Historical", 0.0, 60, 600, 2300, 4.7, "Iconic seaside basalt triumphal arch facing the Arabian Sea", 18.922000, 72.834700 },
+        { 47, 6, "Marine Drive Queen's Necklace", "Nature", 0.0, 90, 600, 2359, 4.8, "Sweeping coastal promenade celebrated for evening breezes and sunset skyline", 18.943200, 72.823000 },
+        { 48, 6, "Elephanta Caves UNESCO", "Historical", 260.0, 210, 900, 1700, 4.6, "Rock-cut cave temples dedicated to Shiva on an island reached by harbour ferry", 18.963300, 72.931500 },
+        { 49, 6, "Chhatrapati Shivaji Terminus", "Cultural", 0.0, 45, 600, 2200, 4.7, "Victorian Gothic UNESCO railway headquarters with gargoyles and stained glass", 18.940000, 72.835300 },
+        { 50, 6, "Bandra Bandstand & Fort", "Nature", 0.0, 75, 600, 2100, 4.6, "Rocky seashore walkway beside Portuguese fort and Bollywood star residences", 19.043500, 72.819400 },
+        { 51, 6, "Juhu Chowpatty Beach Food", "Food", 300.0, 90, 1600, 2359, 4.7, "Lively beach fair with pav bhaji, bhel puri, kulfi and sea waves", 19.098800, 72.826400 },
+        { 108, 6, "Sanjay Gandhi National Park & Caves", "Nature", 90.0, 210, 730, 1730, 4.6, "Dense protected urban forest housing 109 rock-cut Buddhist caves dating from 1st century BC", 19.228800, 72.918200 },
+        { 109, 6, "Haji Ali Dargah Coastal Shrine", "Religious", 0.0, 60, 600, 2200, 4.7, "Revered 15th-century Indo-Islamic mosque located on an offshore islet in Arabian Sea", 18.982700, 72.808900 },
+        { 134, 6, "Siddhivinayak Ganpati Temple", "Religious", 0.0, 60, 530, 2200, 4.8, "Centuries-old iconic shrine in Prabhadevi blessed with a gold-plated sanctum", 19.016800, 72.830300 },
+        { 135, 6, "CSMVS Museum & Kala Ghoda", "Cultural", 150.0, 120, 1015, 1800, 4.8, "Premier art museum set in palm gardens, surrounded by historic Kala Ghoda art galleries", 18.926900, 72.832700 },
+        { 52, 7, "Basilica of Bom Jesus", "Religious", 50.0, 60, 900, 1730, 4.7, "16th-century UNESCO Baroque church holding mortal remains of St. Francis Xavier", 15.500900, 73.911600 },
+        { 53, 7, "Palolem Beach Crescent", "Nature", 0.0, 180, 600, 2200, 4.8, "Idyllic crescent white-sand bay lined with coconut palms and beach huts", 15.010000, 74.023200 },
+        { 54, 7, "Dudhsagar Waterfalls Trek", "Adventure", 500.0, 240, 800, 1600, 4.8, "Towering 4-tiered milk-white cascade deep within the Western Ghats jungle", 15.314400, 74.314300 },
+        { 55, 7, "Fort Aguada & Lighthouse", "Historical", 50.0, 90, 900, 1800, 4.6, "17th-century Portuguese fortress overlooking Sinquerim beach and Arabian Sea", 15.492500, 73.773700 },
+        { 56, 7, "Fontainhas Latin Quarter", "Cultural", 0.0, 90, 800, 1900, 4.8, "Colourful Portuguese heritage lanes with azulejos tiles and indie cafes", 15.498900, 73.831100 },
+        { 57, 7, "Anjuna Flea Market & Sunset", "Cultural", 0.0, 120, 1000, 2000, 4.6, "Bohemian beachside shopping for handmade jewelry, crafts and live music", 15.573300, 73.741000 },
+        { 110, 7, "Sahakari Spice Farm Ponda", "Nature", 500.0, 120, 900, 1630, 4.7, "Lush organic plantation tour featuring vanilla, cinnamon, cardamom and Goan buffet", 15.405000, 74.020000 },
+        { 111, 7, "Chapora Fort Sunset", "Historical", 0.0, 90, 800, 1900, 4.6, "Iconic hilltop fortification made famous in pop culture with views over Vagator beach", 15.605800, 73.736000 },
+        { 136, 7, "Baga Beach & Watersports", "Adventure", 600.0, 150, 700, 2300, 4.6, "Action-packed shore offering parasailing, jet skis, banana rides and vibrant beach shacks", 15.555300, 73.751700 },
+        { 137, 7, "Reis Magos Fort Mandovi", "Historical", 50.0, 75, 930, 1730, 4.7, "Restored 1551 fortress overlooking the Mandovi River mouth and Panaji shoreline", 15.497500, 73.808000 },
+        { 58, 8, "Solang Valley Snow Sports", "Adventure", 600.0, 210, 830, 1700, 4.8, "Premier adventure hub for paragliding, zorbing and winter skiing", 32.316600, 77.157500 },
+        { 59, 8, "Hadimba Temple Forest Shrine", "Religious", 30.0, 60, 800, 1800, 4.6, "Ancient multi-tiered wooden pagoda surrounded by towering cedar trees", 32.248300, 77.180700 },
+        { 60, 8, "Rohtang Pass High Altitude", "Adventure", 1000.0, 300, 700, 1600, 4.9, "Glacial pass at 13,058 ft offering breathtaking snow peaks", 32.371600, 77.246600 },
+        { 61, 8, "Old Manali Riverside Cafes", "Food", 450.0, 120, 900, 2200, 4.7, "Bohemian apple orchard village with trout fish dining and live acoustic music", 32.253000, 77.175000 },
+        { 138, 8, "Jogini Waterfall Trek", "Nature", 0.0, 150, 600, 1800, 4.8, "Scenic mountain hike through apple orchards and pine woods to a cascading glacial stream", 32.268000, 77.185000 },
+        { 62, 9, "The Ridge & Mall Road", "Cultural", 0.0, 120, 800, 2200, 4.7, "Pedestrian boulevard overlooking snow peaks with colonial Christ Church", 31.104200, 77.175000 },
+        { 63, 9, "Jakhoo Hill & Temple Ropeway", "Religious", 250.0, 90, 800, 1800, 4.6, "Highest hill peak with giant Lord Hanuman statue and cable car ride", 31.100900, 77.185300 },
+        { 64, 9, "Kalka-Shimla Toy Train", "Historical", 150.0, 180, 800, 1600, 4.8, "UNESCO heritage narrow-gauge rail journey traversing 102 mountain tunnels", 31.103000, 77.168000 },
+        { 65, 9, "Kufri Snow Viewpoint", "Adventure", 300.0, 120, 900, 1700, 4.5, "Popular hill outpost for horse riding, yak photography and snow slopes", 31.097900, 77.267800 },
+        { 139, 9, "Viceregal Lodge & Botanical Gardens", "Historical", 100.0, 90, 1000, 1700, 4.7, "Grand Jacobethan estate of British viceroys holding historical conference rooms and manicured lawns", 31.104000, 77.141500 },
+        { 66, 10, "Golden Temple (Harmandir Sahib)", "Religious", 0.0, 180, 400, 2300, 5.0, "Most sacred Sikh shrine plated with pure gold surrounded by holy Amrit Sarovar", 31.620000, 74.876500 },
+        { 67, 10, "Wagah Border Beating Retreat", "Cultural", 0.0, 120, 1500, 1830, 4.9, "Electrifying daily military ceremony at the India-Pakistan border gate", 31.604700, 74.572400 },
+        { 68, 10, "Jallianwala Bagh Memorial", "Historical", 0.0, 60, 630, 1930, 4.7, "Somber national historical garden commemorating the 1919 independence movement", 31.620600, 74.880100 },
+        { 69, 10, "Amritsari Kulcha Food Trail", "Food", 250.0, 60, 800, 1600, 4.9, "Clay oven baked crisp kulchas served with spiced chole and homemade butter", 31.630000, 74.870000 },
+        { 120, 10, "Partition Museum Town Hall", "Cultural", 20.0, 120, 1000, 1800, 4.8, "World's first museum dedicated to the poignant stories and artifacts of the 1947 partition", 31.624700, 74.875600 },
+        { 121, 10, "Gobindgarh Fort & Live Shows", "Historical", 180.0, 150, 1000, 2200, 4.6, "18th-century military fort holding the Toshakhana treasury and evening light spectacles", 31.626400, 74.862200 },
+        { 70, 11, "Ganga White Water Rafting", "Adventure", 650.0, 180, 800, 1600, 4.9, "Exhilarating Class III & IV rapids along the scenic Himalayan Ganges river", 30.130000, 78.320000 },
+        { 71, 11, "Triveni Ghat Evening Aarti", "Religious", 0.0, 75, 1700, 2000, 4.9, "Sacred convergence ghat with chanting priests and floating brass leaf lamps", 30.103300, 78.294700 },
+        { 72, 11, "Beatles Ashram (Chaurasi Kutia)", "Cultural", 150.0, 90, 900, 1630, 4.7, "Forest ashram where The Beatles composed the White Album, featuring murals", 30.119000, 78.314000 },
+        { 73, 11, "Ram Jhula & Laxman Jhula", "Cultural", 0.0, 60, 600, 2200, 4.6, "Iconic suspension bridges spanning the turquoise Ganges with mountain views", 30.123400, 78.315000 },
+        { 118, 11, "Neelkanth Mahadev Temple", "Religious", 0.0, 120, 600, 1900, 4.7, "Revered Shiva shrine nestled in dense mountain valleys at 4,360 ft", 30.138000, 78.334000 },
+        { 119, 11, "Kunjapuri Devi Sunrise Trek", "Adventure", 200.0, 150, 500, 1100, 4.9, "Panoramic vantage point offering views of high Himalayan peaks like Swargarohini", 30.160000, 78.310000 },
+        { 90, 12, "Cellular Jail National Memorial", "Historical", 50.0, 120, 900, 1700, 4.9, "Historic colonial prison complex renowned for its poignant evening light and sound show", 11.673900, 92.747800 },
+        { 91, 12, "Radhanagar Beach Havelock", "Nature", 0.0, 180, 600, 1830, 4.9, "Acclaimed as one of Asia's most pristine white-sand beaches with turquoise lagoon waters", 11.984100, 92.952500 },
+        { 92, 12, "Ross Island British Ruins", "Historical", 100.0, 120, 830, 1630, 4.7, "Old British administrative headquarters overtaken by giant banyan tree roots and deer", 11.670000, 92.763000 },
+        { 93, 12, "Elephant Beach Coral Reef", "Adventure", 750.0, 180, 800, 1600, 4.8, "Vibrant coral reef hub renowned for sea walking, glass-bottom boats and snorkeling", 11.990000, 92.950000 },
+        { 140, 12, "Chidiya Tapu Sunset Point", "Nature", 0.0, 90, 600, 1830, 4.7, "Southern tip of South Andaman renowned for lush mangroves, endemic birds and sunset views", 11.505000, 92.705000 },
+        { 74, 14, "Lalbagh Botanical Garden", "Nature", 50.0, 120, 600, 1900, 4.7, "240-acre botanical haven with century-old trees and Victorian glasshouse", 12.950700, 77.584800 },
+        { 75, 14, "Bangalore Palace", "Historical", 250.0, 120, 1000, 1730, 4.5, "Tudor-style royal estate with fortified towers, wood carvings and gardens", 12.998800, 77.592100 },
+        { 76, 14, "Cubbon Park & Vidhana Soudha", "Nature", 0.0, 90, 600, 1900, 4.7, "Sprawling green heart of Bengaluru facing the Neo-Dravidian statehouse", 12.976300, 77.592900 },
+        { 77, 14, "VV Puram Food Street", "Food", 300.0, 90, 1730, 2300, 4.8, "Sensory vegetarian street food trail with dosas, obbattu and rose gulkand", 12.952500, 77.577200 },
+        { 94, 14, "Bannerghatta Biological Park", "Nature", 350.0, 210, 930, 1700, 4.6, "Sprawling safari sanctuary with tigers, lions, butterfly conservatory and rescue center", 12.800900, 77.577700 },
+        { 95, 14, "Nandi Hills Sunrise Point", "Adventure", 50.0, 180, 600, 1800, 4.7, "Ancient hill fortress shrouded in mist, offering spectacular golden sunrise panoramas", 13.370200, 77.683500 },
+        { 96, 14, "Tipu Sultan's Summer Palace", "Historical", 50.0, 60, 830, 1730, 4.4, "Ornate teakwood palace with fluted pillars, frescoes and historical Anglo-Mysore exhibits", 12.959300, 77.573800 },
+        { 141, 14, "ISKCON Temple Bangalore", "Religious", 0.0, 90, 715, 2030, 4.8, "Magnificent Neo-classical gopuram temple atop Hare Krishna Hill with chanting halls and prasadam", 13.009800, 77.551100 },
+        { 142, 14, "Visvesvaraya Industrial & Tech Museum", "Cultural", 85.0, 120, 930, 1800, 4.7, "Interactive science discovery centre holding aerospace simulators, dinosaur corner and engine halls", 12.975200, 77.596000 },
+        { 78, 15, "Charminar & Laad Bazaar", "Historical", 35.0, 90, 930, 1730, 4.7, "16th-century landmark with 4 grand minarets flanked by lacquer bangle lanes", 17.361600, 78.474700 },
+        { 79, 15, "Golconda Fort & Light Show", "Historical", 80.0, 150, 900, 1730, 4.8, "Acoustic medieval diamond citadel where the Koh-i-Noor diamond was kept", 17.383300, 78.401100 },
+        { 80, 15, "Hussain Sagar Lake & Buddha", "Nature", 50.0, 75, 800, 2100, 4.6, "Heart-shaped lake featuring world's tallest monolithic standing Buddha", 17.423900, 78.473800 },
+        { 81, 15, "Paradise Hyderabadi Biryani", "Food", 450.0, 75, 1100, 2300, 4.9, "World-famed Dum Biryani cooked with fragrant basmati and saffron spices", 17.441600, 78.487200 },
+        { 97, 15, "Salar Jung Museum", "Cultural", 100.0, 180, 1000, 1700, 4.8, "One of the world's largest one-man collections featuring the Veiled Rebecca and musical clock", 17.371400, 78.480400 },
+        { 98, 15, "Qutb Shahi Tombs", "Historical", 50.0, 90, 930, 1730, 4.7, "Majestic domed royal mausoleums set in landscaped heritage gardens of Ibrahim Bagh", 17.393200, 78.396100 },
+        { 99, 15, "Ramoji Film City", "Adventure", 1350.0, 360, 900, 1730, 4.6, "World's largest film studio complex featuring themed movie sets, stunt shows and eco tour", 17.254300, 78.680800 },
+        { 143, 15, "Chowmahalla Palace", "Cultural", 100.0, 120, 1000, 1700, 4.8, "Opulent seat of the Asaf Jahi dynasty with grand Khilwat durbar hall, vintage Rolls Royces and fountains", 17.357800, 78.471700 },
+        { 144, 15, "Birla Mandir Hyderabad", "Religious", 0.0, 60, 700, 2100, 4.8, "Pure white Rajasthani marble temple overlooking Hussain Sagar lake atop Naubat Pahad hill", 17.406200, 78.469100 },
+        { 82, 16, "Chinese Fishing Nets Fort Kochi", "Cultural", 0.0, 60, 600, 2100, 4.7, "Historic cantilevered shore nets silhouetted against Arabian Sea sunsets", 9.967400, 76.242700 },
+        { 83, 16, "Mattancherry Dutch Palace", "Historical", 25.0, 75, 945, 1700, 4.5, "16th-century Portuguese palace featuring exquisite Hindu mythological murals", 9.958300, 76.259200 },
+        { 84, 16, "Jew Town & Paradesi Synagogue", "Cultural", 20.0, 60, 1000, 1700, 4.6, "Antique shops and 1568 synagogue with hand-painted Chinese porcelain tiles", 9.957500, 76.259600 },
+        { 85, 16, "Kerala Backwaters Day Cruise", "Nature", 800.0, 210, 830, 1700, 4.9, "Serene canal voyage on traditional kettuvallam through palm backwaters", 9.931200, 76.267300 },
+        { 100, 16, "Fort Kochi Beach & Promenade", "Nature", 0.0, 90, 600, 2200, 4.6, "Historic seaside promenade with heritage trees, sunset viewpoints and maritime history", 9.965800, 76.241500 },
+        { 101, 16, "Kerala Kathakali Centre", "Cultural", 400.0, 90, 1700, 2000, 4.9, "Classical dance theatre showcasing elaborate makeup rituals, mudras and Kathakali recitals", 9.965000, 76.243500 },
+        { 102, 16, "Hill Palace Museum Tripunithura", "Historical", 50.0, 120, 900, 1630, 4.5, "Largest archaeological palace museum in Kerala with royal crown, carriage and deer park", 9.953100, 76.363900 },
+        { 86, 17, "Victoria Memorial Hall", "Historical", 50.0, 120, 1000, 1700, 4.8, "Monumental white Makrana marble palace surrounded by 64 acres of gardens", 22.544800, 88.342600 },
+        { 87, 17, "Howrah Bridge & Hooghly Walk", "Cultural", 0.0, 60, 500, 2300, 4.8, "Cantilevered engineering marvel spanning the busy waters of Hooghly River", 22.585100, 88.346800 },
+        { 88, 17, "Dakshineswar Kali Temple", "Religious", 0.0, 90, 600, 2030, 4.9, "19th-century navaratna temple where mystic Ramakrishna Paramahamsa served", 22.655000, 88.357600 },
+        { 89, 17, "Park Street Dining & Sweets", "Food", 400.0, 90, 1100, 2300, 4.9, "Iconic colonial dining avenue with kathi rolls, chelo kababs and rasgullas", 22.552800, 88.352400 },
+        { 103, 17, "Indian Museum Kolkata", "Cultural", 75.0, 150, 1000, 1700, 4.7, "Ninth oldest museum in the world with rare Egyptian mummies, fossils and Mughal art", 22.557900, 88.351100 },
+        { 104, 17, "Princep Ghat & River Cruise", "Nature", 150.0, 90, 600, 2200, 4.8, "Grecian monument along Hooghly River offering traditional wooden boat sunset rides", 22.554000, 88.332000 },
+        { 105, 17, "College Street Book Alley", "Cultural", 200.0, 90, 1000, 2030, 4.9, "World's largest secondhand book market surrounding the legendary Indian Coffee House", 22.574400, 88.363000 },
+        { 145, 17, "Belur Math Spiritual Centre", "Religious", 0.0, 90, 630, 1900, 4.9, "Headquarters of Ramakrishna Math synthesizing Hindu, Christian and Islamic architectural motifs", 22.631800, 88.356200 }
     };
 
     data->numAttractions = sizeof(attrs) / sizeof(attrs[0]);

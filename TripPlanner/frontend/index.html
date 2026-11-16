@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,7 +24,7 @@
         </div>
         <div class="brand-text">
           <span class="brand-title">TripPlanner</span>
-          <span class="brand-subtitle">Smart Itinerary & Budget Engine</span>
+          <span class="brand-subtitle">Smart Itinerary & Budget Planner</span>
         </div>
       </div>
 
@@ -49,9 +51,6 @@
     <!-- Hero Section -->
     <section class="hero-section">
       <div class="hero-content">
-        <div class="hero-tag">
-          <span class="tag-pulse"></span> Intelligent Itinerary Planning & Budget Optimization
-        </div>
         <h1 class="hero-heading">Craft Perfect Journeys with <span class="gradient-text">Smart Planning</span></h1>
         <p class="hero-subtext">
           Select your destination city, customize your travel style and budget in Indian Rupees, and get an optimal day-by-day sightseeing schedule with verified opening hours and handpicked hotels.
@@ -84,7 +83,6 @@
     <!-- Interactive Trip Planner Wizard Section -->
     <section id="planner-section" class="content-section">
       <div class="section-header">
-        <div class="badge-pill">Trip Configuration</div>
         <h2>Plan Your City Vacation</h2>
         <p>Choose the city you wish to visit, adjust dates and budget, and let our engine generate an ideal itinerary.</p>
       </div>
@@ -181,54 +179,160 @@
 
             <!-- Submit Button -->
             <button type="submit" id="btn-generate-plan" class="btn btn-primary btn-large">
-              <span class="btn-icon">🚀</span>
-              <span class="btn-text">Generate Complete Trip Plan</span>
+              <span class="btn-label" style="color: #FFFFFF !important;">Generate Complete Trip Plan</span>
               <div class="loader" id="plan-loader"></div>
             </button>
           </form>
         </div>
 
-        <!-- Right Quick Info Card -->
-        <div class="card info-card">
-          <h3>Why Plan with TripPlanner?</h3>
-          <ul class="feature-list">
-            <li>
-              <div class="feature-icon">🗺️</div>
-              <div>
-                <strong>Smart Sightseeing Circuit</strong>
-                <p>Calculates the optimal visiting order across attractions to minimize driving time and maximize your vacation.</p>
+        <!-- Travel Inspiration Panel (Right Column) -->
+        <aside class="inspiration-panel" aria-label="Travel Inspiration">
+
+          <!-- Illustrated scenic banner – inline SVG, no external dependency -->
+          <div class="inspiration-img-wrap" aria-hidden="true">
+            <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <!-- Sky gradient -->
+              <defs>
+                <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#0d2b4e"/>
+                  <stop offset="100%" stop-color="#1a5f8a"/>
+                </linearGradient>
+                <linearGradient id="sunG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#f9c74f"/>
+                  <stop offset="100%" stop-color="#f4845f"/>
+                </linearGradient>
+                <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#1a6fa0"/>
+                  <stop offset="100%" stop-color="#0d3a5c"/>
+                </linearGradient>
+                <linearGradient id="domeG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#e8c87a"/>
+                  <stop offset="100%" stop-color="#c49a3c"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Sky -->
+              <rect width="400" height="220" fill="url(#skyG)"/>
+
+              <!-- Stars -->
+              <circle cx="30"  cy="18" r="1.1" fill="white" opacity="0.7"/>
+              <circle cx="75"  cy="10" r="0.8" fill="white" opacity="0.6"/>
+              <circle cx="130" cy="22" r="1"   fill="white" opacity="0.5"/>
+              <circle cx="200" cy="8"  r="0.9" fill="white" opacity="0.7"/>
+              <circle cx="260" cy="20" r="1.1" fill="white" opacity="0.6"/>
+              <circle cx="330" cy="12" r="0.8" fill="white" opacity="0.5"/>
+              <circle cx="370" cy="25" r="1"   fill="white" opacity="0.6"/>
+              <circle cx="55"  cy="40" r="0.7" fill="white" opacity="0.5"/>
+              <circle cx="310" cy="35" r="0.9" fill="white" opacity="0.6"/>
+
+              <!-- Moon / Sun glow -->
+              <circle cx="340" cy="38" r="18" fill="url(#sunG)" opacity="0.9"/>
+              <circle cx="340" cy="38" r="24" fill="#f9c74f" opacity="0.12"/>
+
+              <!-- Distant mountains -->
+              <polygon points="0,140 60,80 120,130 180,70 240,110 300,65 360,100 400,80 400,160 0,160" fill="#0a3d62" opacity="0.8"/>
+              <polygon points="0,155 80,100 160,140 240,90 320,120 400,95 400,160 0,160" fill="#0d4f7c" opacity="0.6"/>
+
+              <!-- Water / River at bottom -->
+              <rect x="0" y="155" width="400" height="65" fill="url(#waterG)"/>
+              <!-- Water shimmer lines -->
+              <line x1="20"  y1="168" x2="80"  y2="168" stroke="white" stroke-width="0.5" opacity="0.25"/>
+              <line x1="110" y1="175" x2="190" y2="175" stroke="white" stroke-width="0.5" opacity="0.2"/>
+              <line x1="230" y1="165" x2="310" y2="165" stroke="white" stroke-width="0.5" opacity="0.22"/>
+              <line x1="340" y1="180" x2="390" y2="180" stroke="white" stroke-width="0.5" opacity="0.18"/>
+
+              <!-- Ground strip -->
+              <rect x="0" y="148" width="400" height="12" fill="#0c3351"/>
+
+              <!-- Left temple / gopuram structure -->
+              <rect x="30" y="105" width="28" height="50" fill="#c49a3c" opacity="0.9"/>
+              <polygon points="30,105 44,80 58,105" fill="#e8c87a"/>
+              <rect x="38" y="90" width="12" height="15" fill="#b8882e"/>
+              <!-- Gopuram tiers -->
+              <rect x="33" y="96" width="22" height="4" fill="#e8c87a" opacity="0.7"/>
+              <rect x="36" y="88" width="16" height="4" fill="#e8c87a" opacity="0.7"/>
+
+              <!-- Central dome (Taj Mahal-inspired) -->
+              <rect x="155" y="108" width="90" height="47" fill="#d4a843" opacity="0.9"/>
+              <!-- Main dome -->
+              <ellipse cx="200" cy="108" rx="30" ry="28" fill="url(#domeG)"/>
+              <ellipse cx="200" cy="108" rx="30" ry="28" fill="#e8c87a" opacity="0.3"/>
+              <!-- Minarets -->
+              <rect x="148" y="115" width="8" height="38" fill="#c49a3c"/>
+              <ellipse cx="152" cy="115" rx="5" ry="8" fill="#e8c87a"/>
+              <rect x="244" y="115" width="8" height="38" fill="#c49a3c"/>
+              <ellipse cx="248" cy="115" rx="5" ry="8" fill="#e8c87a"/>
+              <!-- Arch detail -->
+              <ellipse cx="200" cy="140" rx="16" ry="13" fill="#0c3351" opacity="0.6"/>
+              <!-- Finial -->
+              <line x1="200" y1="82" x2="200" y2="74" stroke="#e8c87a" stroke-width="2"/>
+              <circle cx="200" cy="73" r="3" fill="#f9c74f"/>
+
+              <!-- Right fort / haveli -->
+              <rect x="320" y="110" width="60" height="45" fill="#8b6914" opacity="0.85"/>
+              <rect x="315" y="105" width="70" height="10" fill="#a07820" opacity="0.9"/>
+              <!-- Battlements -->
+              <rect x="315" y="97" width="8"  height="8" fill="#a07820"/>
+              <rect x="327" y="97" width="8"  height="8" fill="#a07820"/>
+              <rect x="339" y="97" width="8"  height="8" fill="#a07820"/>
+              <rect x="351" y="97" width="8"  height="8" fill="#a07820"/>
+              <rect x="363" y="97" width="8"  height="8" fill="#a07820"/>
+              <rect x="375" y="97" width="8"  height="8" fill="#a07820"/>
+              <!-- Fort windows -->
+              <rect x="332" y="120" width="12" height="16" fill="#0c3351" rx="6"/>
+              <rect x="352" y="120" width="12" height="16" fill="#0c3351" rx="6"/>
+
+              <!-- Foreground tree left -->
+              <rect x="88" y="128" width="5" height="27" fill="#1a3a1a"/>
+              <ellipse cx="90" cy="122" rx="13" ry="16" fill="#1f4d1f"/>
+              <ellipse cx="90" cy="118" rx="9"  ry="12" fill="#236623"/>
+
+              <!-- Foreground tree right -->
+              <rect x="295" y="130" width="5" height="25" fill="#1a3a1a"/>
+              <ellipse cx="297" cy="124" rx="12" ry="14" fill="#1f4d1f"/>
+              <ellipse cx="297" cy="120" rx="8"  ry="10" fill="#236623"/>
+
+              <!-- Reflection of dome in water -->
+              <ellipse cx="200" cy="175" rx="20" ry="8" fill="#e8c87a" opacity="0.12"/>
+              <line x1="195" y1="168" x2="195" y2="185" stroke="#e8c87a" stroke-width="0.8" opacity="0.15"/>
+              <line x1="205" y1="168" x2="205" y2="185" stroke="#e8c87a" stroke-width="0.8" opacity="0.15"/>
+
+              <!-- Overlay text label -->
+              <text x="200" y="210" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="white" opacity="0.55" letter-spacing="2">INCREDIBLE INDIA</text>
+            </svg>
+          </div>
+
+          <!-- Panel body -->
+          <div class="inspiration-body">
+            <h3 class="inspiration-heading">Your next adventure<br>starts here.</h3>
+            <p class="inspiration-desc">Discover new destinations, explore incredible places and create an itinerary that fits your travel style and budget.</p>
+
+            <div class="inspiration-highlights">
+              <div class="highlight-item">
+                <div class="highlight-icon">🗺️</div>
+                <div class="highlight-text">
+                  <span class="highlight-title">Smart Routes</span>
+                  <span class="highlight-sub">Find the most convenient travel routes between attractions.</span>
+                </div>
               </div>
-            </li>
-            <li>
-              <div class="feature-icon">⏰</div>
-              <div>
-                <strong>Opening Hours & Time Protection</strong>
-                <p>Respects opening and closing gates for every attraction, ensuring you never arrive at a closed monument.</p>
+              <div class="highlight-item">
+                <div class="highlight-icon">📋</div>
+                <div class="highlight-text">
+                  <span class="highlight-title">Personalised Plans</span>
+                  <span class="highlight-sub">Build day-by-day itineraries around your interests and schedule.</span>
+                </div>
               </div>
-            </li>
-            <li>
-              <div class="feature-icon">💰</div>
-              <div>
-                <strong>Transparent Indian Rupee Budgeting</strong>
-                <p>Comprehensive breakdown of lodging, dining, transit, activity fees, and emergency reserve in ₹ (INR).</p>
+              <div class="highlight-item">
+                <div class="highlight-icon">💰</div>
+                <div class="highlight-text">
+                  <span class="highlight-title">Budget Friendly</span>
+                  <span class="highlight-sub">Plan complete trips within your budget in Indian Rupees.</span>
+                </div>
               </div>
-            </li>
-            <li>
-              <div class="feature-icon">🏨</div>
-              <div>
-                <strong>Smart Accommodation Matching</strong>
-                <p>Recommends top-rated hotels and surfaces budget-saver alternatives that can save thousands of Rupees.</p>
-              </div>
-            </li>
-            <li>
-              <div class="feature-icon">💾</div>
-              <div>
-                <strong>Save & Manage Itineraries</strong>
-                <p>Keep track of all your planned vacations chronologically and access them anytime.</p>
-              </div>
-            </li>
-          </ul>
-        </div>
+            </div>
+          </div>
+
+        </aside>
       </div>
     </section>
 
@@ -451,9 +555,14 @@
 
       <div class="card search-card">
         <div class="search-input-group">
+          <div class="search-city-select-wrapper">
+            <select id="select-search-city" class="form-control search-city-select">
+              <option value="All">All Cities</option>
+            </select>
+          </div>
           <div class="search-field">
             <span class="search-icon">🔍</span>
-            <input type="text" id="input-search-query" class="search-input" placeholder="Search by attraction name or city (e.g. Shaniwar Wada, Sinhagad, Fort, Lake, Temple)...">
+            <input type="text" id="input-search-query" class="search-input" placeholder="Search by attraction name (e.g. Shaniwar Wada, Sinhagad, Fort, Lake, Temple)...">
           </div>
           <button id="btn-search-trigger" class="btn btn-primary">Search</button>
         </div>
@@ -467,6 +576,15 @@
           <button class="cat-pill" data-cat="Adventure">Adventure</button>
           <button class="cat-pill" data-cat="Religious">Religious</button>
           <button class="cat-pill" data-cat="Food">Food & Street Trail</button>
+        </div>
+
+        <!-- Interactive Attractions Map -->
+        <div class="attractions-map-wrapper">
+          <div class="map-header">
+            <div class="map-title"><span class="icon">🗺️</span> Sights Map</div>
+            <div class="map-city-label" id="map-city-label">All Cities</div>
+          </div>
+          <div id="attractions-map" class="attractions-map"></div>
         </div>
 
         <div class="search-results-meta">
@@ -538,6 +656,27 @@
     </div>
   </footer>
 
+  <!-- Saved Trip Details Modal -->
+  <div id="saved-trip-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 id="modal-trip-name" class="modal-title">Trip Details</h3>
+          <p id="modal-trip-meta" class="modal-subtitle"></p>
+        </div>
+        <button id="btn-close-trip-modal" class="btn-close" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-trip-body">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button id="btn-modal-back" class="btn btn-secondary">← Back to Saved Trips</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="script.js"></script>
 </body>
 </html>
