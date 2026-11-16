@@ -1,4 +1,3 @@
-6501|Manali Tour|2026-11-16|20261116|Manali|Manali|7|4|500000.00|349604.84|20.30|Luxury|Trip to Manali. Planned transit: 20.3 km.
 1001|Pune Heritage & Sahyadri Forts|2026-11-20|20261120|Pune|Pune|3|2|25000.00|18500.00|48.00|Standard|Shaniwar Wada, Sinhagad Fort, Aga Khan Palace, and Dagdusheth Ganpati
 1002|Mumbai Coastal Skyline & Heritage|2026-11-25|20261125|Mumbai|Mumbai|3|2|35000.00|28400.00|36.00|Standard|Gateway of India, Marine Drive Queen's Necklace, Bandra Fort, and Elephanta Caves
 1003|Sun-Kissed Goa Beach & Heritage Escape|2026-12-02|20261202|Goa|Goa|4|2|45000.00|38200.00|55.00|Standard|Palolem Beach, Fort Aguada, Dudhsagar Falls, and Fontainhas Latin Quarter
