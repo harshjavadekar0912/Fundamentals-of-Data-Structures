@@ -482,22 +482,21 @@ function renderTripResults(plan) {
   // Render hops timeline
   elements.hopsContainer.innerHTML = '';
   if (route.hops && route.hops.length > 0) {
-    route.hops.forEach((h, idx) => {
+    route.hops.forEach((h) => {
       const hop = document.createElement('div');
       hop.className = 'hop-item';
       hop.innerHTML = `
-        <div class="hop-badge">Leg ${idx + 1}</div>
-        <div class="hop-content">
-          <div class="hop-names">
-            <span class="from-name">${h.fromName}</span>
-            <span class="arrow">➔</span>
-            <span class="to-name">${h.toName}</span>
-          </div>
-          <div class="hop-meta">
-            <span>Day ${h.day}</span> &bull;
-            <span>${h.distanceKm.toFixed(1)} km</span> &bull;
-            <span>${h.travelTimeMin} mins transit</span>
-          </div>
+        <div class="hop-route">
+          <span class="from-name">${h.fromName}</span>
+          <span class="hop-arrow">→</span>
+          <span class="to-name">${h.toName}</span>
+        </div>
+        <div class="hop-meta">
+          <span>Day ${h.day}</span>
+          <span class="meta-sep">·</span>
+          <span>${h.distanceKm.toFixed(1)} km</span>
+          <span class="meta-sep">·</span>
+          <span>${h.travelTimeMin} mins transit</span>
         </div>
       `;
       elements.hopsContainer.appendChild(hop);
@@ -520,19 +519,17 @@ function renderTripResults(plan) {
         day.items.forEach(it => {
           itemsHtml += `
             <div class="schedule-item">
-              <div class="item-time">
-                <span class="time-range">${formatHHMM(it.visitStartTime)} - ${formatHHMM(it.visitEndTime)}</span>
-                <span class="item-duration">${it.visitDurationMin} mins</span>
+              <div class="item-time-row">
+                <span class="time-range">${formatHHMM(it.visitStartTime)} – ${formatHHMM(it.visitEndTime)}</span>
+                <span class="time-duration">(${it.visitDurationMin} mins)</span>
               </div>
-              <div class="item-details">
-                <div class="item-header">
-                  <span class="item-name">${it.name}</span>
-                  <span class="badge info">${it.category}</span>
-                </div>
-                <div class="item-meta">
-                  <span>Entry: ${it.ticketCost > 0 ? formatINR(it.ticketCost) : 'Free'}</span>
-                  ${it.timingNote ? `<span class="timing-note">• ${it.timingNote}</span>` : ''}
-                </div>
+              <div class="item-name-row">
+                <span class="item-name">${it.name}</span>
+                <span class="badge info">${it.category}</span>
+              </div>
+              <div class="item-meta-row">
+                <span class="item-fee">Entry: <strong>${it.ticketCost > 0 ? formatINR(it.ticketCost) : 'Free'}</strong></span>
+                ${it.timingNote ? `<span class="meta-sep">·</span><span class="timing-note">${it.timingNote}</span>` : ''}
               </div>
             </div>
           `;
@@ -543,10 +540,12 @@ function renderTripResults(plan) {
 
       dayCard.innerHTML = `
         <div class="day-header">
-          <div class="day-title">Day ${day.dayNumber}</div>
-          <div class="day-stats">
-            <span>${day.itemCount} Stops</span> &bull;
-            <span>${formatHHMM(day.dayStartTime)} to ${formatHHMM(day.dayEndTime)}</span> &bull;
+          <h4 class="day-title">Day ${day.dayNumber}</h4>
+          <div class="day-summary">
+            <span>${day.itemCount} Stops</span>
+            <span class="summary-sep">·</span>
+            <span>${formatHHMM(day.dayStartTime)} to ${formatHHMM(day.dayEndTime)}</span>
+            <span class="summary-sep">·</span>
             <span>Tickets: ${formatINR(day.totalTicketCost)}</span>
           </div>
         </div>
